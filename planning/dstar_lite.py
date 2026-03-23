@@ -166,15 +166,14 @@ class DStarLitePlanner:
 
     def _astar_fallback(self) -> Path:
         """Simple A* search as fallback when D* Lite extraction fails."""
-        import heapq as _hq
         start, goal = self._start, self._goal
         open_set = []
-        _hq.heappush(open_set, (self._heuristic(start, goal), start))
+        heapq.heappush(open_set, (self._heuristic(start, goal), start))
         came_from = {}
         g_score = {start: 0.0}
         visited = set()
         while open_set:
-            _, current = _hq.heappop(open_set)
+            _, current = heapq.heappop(open_set)
             if current in visited:
                 continue
             visited.add(current)
@@ -196,7 +195,7 @@ class DStarLitePlanner:
                     came_from[nbr] = current
                     g_score[nbr] = tentative
                     f = tentative + self._heuristic(nbr, goal)
-                    _hq.heappush(open_set, (f, nbr))
+                    heapq.heappush(open_set, (f, nbr))
         # No path found — return start → goal directly
         return Path(cells=[start, goal])
 
