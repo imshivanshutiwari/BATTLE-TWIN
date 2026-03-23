@@ -62,3 +62,46 @@ def test_alert_log():
     state.add_alert("FLASH", "B01", "PROXIMITY", "Enemy within 2km")
     assert len(state.alerts) == 1
     assert state.alerts[0]["level"] == "FLASH"
+
+
+def test_state_reconciler_merge_unit_updates():
+    """Ensure merge_unit_updates folds ALL updates, not just the first pair."""
+    from digital_twin.state_reconciler import StateReconciler
+
+    reconciler = StateReconciler(strategy="LAST_WRITER_WINS")
+    current = {"lat": 34.00, "lon": -117.00, "speed_mps": 0.0, "fuel_pct": 100}
+
+    updates = [
+        ({"lat": 34.01, "speed_mps": 2.0}, "GPS", 1000.0),
+        ({"lat": 34.02, "fuel_pct": 80}, "SENSOR", 1001.0),
+        ({"lat": 34.03, "speed_mps": 5.0}, "GPS", 1002.0),
+    ]
+
+    result = reconciler.merge_unit_updates(current, updates)
+
+    # All three updates must have been applied (lat from last GPS update wins)
+    assert result["lat"] == 34.03, f"Expected 34.03, got {result['lat']}"
+    assert result["speed_mps"] == 5.0
+    assert result["fuel_pct"] == 80  # from second update
+    assert result["lon"] == -117.00  # unchanged field preserved
+
+
+def test_state_reconciler_single_update():
+    """Single update must still be applied correctly."""
+    from digital_twin.state_reconciler import StateReconciler
+
+    reconciler = StateReconciler()
+    current = {"lat": 34.00, "lon": -117.00}
+    result = reconciler.merge_unit_updates(current, [({"lat": 34.05}, "GPS", 1000.0)])
+    assert result["lat"] == 34.05
+    assert result["lon"] == -117.00
+
+
+def test_state_reconciler_empty_updates():
+    """Empty update list must return current state unchanged."""
+    from digital_twin.state_reconciler import StateReconciler
+
+    reconciler = StateReconciler()
+    current = {"lat": 34.00, "lon": -117.00}
+    result = reconciler.merge_unit_updates(current, [])
+    assert result == current

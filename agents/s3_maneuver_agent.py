@@ -38,7 +38,7 @@ class S3ManeuverAgent:
             try:
                 resp = self._llm.invoke([SystemMessage(content=S3_SYSTEM_PROMPT), HumanMessage(content=prompt)])
                 try: return json.loads(resp.content)
-                except: return {"plan": resp.content}
+                except Exception: return {"plan": resp.content}
             except Exception as e:
                 log.warning(f"LLM failed: {e}")
         return self._rule_based_plan(units, objectives)

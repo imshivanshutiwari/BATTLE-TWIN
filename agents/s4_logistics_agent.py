@@ -22,7 +22,7 @@ class S4LogisticsAgent:
         self._llm = None
         if LLM_AVAILABLE:
             try: self._llm = ChatOpenAI(model=model_name, temperature=temperature)
-            except: pass
+            except Exception: pass
 
     def assess_logistics(self, units: List[Dict]) -> Dict:
         if self._llm:
@@ -30,8 +30,8 @@ class S4LogisticsAgent:
                 resp = self._llm.invoke([SystemMessage(content=S4_PROMPT),
                     HumanMessage(content=f"Assess logistics: {json.dumps(units[:10], default=str)}")])
                 try: return json.loads(resp.content)
-                except: return {"assessment": resp.content}
-            except: pass
+                except Exception: return {"assessment": resp.content}
+            except Exception: pass
         return self._rule_based_assessment(units)
 
     def _rule_based_assessment(self, units: List[Dict]) -> Dict:

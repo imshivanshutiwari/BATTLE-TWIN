@@ -41,7 +41,7 @@ class CommanderAgent:
                 resp = self._llm.invoke([SystemMessage(content=CDR_PROMPT), HumanMessage(content=prompt)])
                 try:
                     return json.loads(resp.content)
-                except:
+                except Exception:
                     return {"decision": resp.content}
             except Exception as e:
                 log.warning(f"LLM failed: {e}")

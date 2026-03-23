@@ -22,7 +22,7 @@ class FSOFiresAgent:
         self._llm = None
         if LLM_AVAILABLE:
             try: self._llm = ChatOpenAI(model=model_name, temperature=temperature)
-            except: pass
+            except Exception: pass
 
     def plan_fires(self, targets: List[Dict], friendly_positions: List[Dict],
                    available_assets: List[str] = None) -> Dict:
@@ -31,8 +31,8 @@ class FSOFiresAgent:
                 prompt = f"Plan fire support:\nTargets: {json.dumps(targets[:5], default=str)}\nFriendly: {json.dumps(friendly_positions[:5], default=str)}"
                 resp = self._llm.invoke([SystemMessage(content=FSO_PROMPT), HumanMessage(content=prompt)])
                 try: return json.loads(resp.content)
-                except: return {"plan": resp.content}
-            except: pass
+                except Exception: return {"plan": resp.content}
+            except Exception: pass
         return self._rule_based_fires(targets, friendly_positions)
 
     def _rule_based_fires(self, targets, friendlies) -> Dict:

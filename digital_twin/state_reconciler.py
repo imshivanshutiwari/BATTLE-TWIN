@@ -193,20 +193,27 @@ class StateReconciler:
             Merged state dictionary.
         """
         result = dict(current)
-        # Sort by timestamp
+        if not updates:
+            return result
+
+        # Sort by timestamp — earlier updates applied first
         sorted_updates = sorted(updates, key=lambda x: x[2])
 
-        for i, (delta, source, ts) in enumerate(sorted_updates):
-            if i < len(sorted_updates) - 1:
-                next_delta, next_source, next_ts = sorted_updates[i + 1]
-                result = self.reconcile(
-                    result, delta, next_delta,
-                    source, next_source, ts, next_ts
-                )
-                break
-            else:
-                for k, v in delta.items():
-                    result[k] = v
+        # Fold each delta into the accumulated result using the configured strategy.
+        # For every update, reconcile the current values of affected fields (prev)
+        # against the incoming delta (next), accumulating into result.
+        prev_source = "CURRENT"
+        prev_ts = sorted_updates[0][2] - 1.0  # just before the first update
+
+        for delta, source, ts in sorted_updates:
+            # Build a "current-state slice" containing only fields touched by this delta
+            current_slice = {k: result[k] for k in delta if k in result}
+            result = self.reconcile(
+                result, current_slice, delta,
+                prev_source, source, prev_ts, ts,
+            )
+            prev_source = source
+            prev_ts = ts
 
         return result
 

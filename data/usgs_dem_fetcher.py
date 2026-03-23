@@ -178,6 +178,10 @@ class USGSDEMFetcher:
         # Gradient (higher to north/east, typical of desert terrain)
         dem += 100.0 * yy + 50.0 * xx
 
+        # Clamp to the physically realistic range for Fort Irwin NTC
+        # (high-desert terrain: ~700–1600 m)
+        dem = np.clip(dem, 650.0, 1900.0)
+
         return dem.astype(np.float32)
 
     def compute_slope(self, dem: np.ndarray, cell_size_m: float = 30.0) -> np.ndarray:
