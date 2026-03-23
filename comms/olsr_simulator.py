@@ -127,9 +127,7 @@ class OLSRSimulator:
             node.routing_table.clear()
             try:
                 paths = nx.single_source_dijkstra_path(self.topology, nid, weight="distance")
-                _ = nx.single_source_dijkstra_path_length(
-                    self.topology, nid, weight="distance"
-                )
+                _ = nx.single_source_dijkstra_path_length(self.topology, nid, weight="distance")
                 for dest, path in paths.items():
                     if dest != nid and len(path) >= 2:
                         node.routing_table[dest] = (path[1], len(path) - 1)
