@@ -1,6 +1,7 @@
 """S2 Intelligence agent — threat analysis and enemy situation tracking."""
+
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 from utils.logger import get_logger
 
 log = get_logger("AGENT_S2")
@@ -8,6 +9,7 @@ log = get_logger("AGENT_S2")
 try:
     from langchain_openai import ChatOpenAI
     from langchain_core.messages import SystemMessage, HumanMessage
+
     LLM_AVAILABLE = True
 except ImportError:
     LLM_AVAILABLE = False
@@ -34,16 +36,20 @@ class S2IntelAgent:
             except Exception as e:
                 log.warning(f"LLM init failed: {e}")
 
-    def analyze_threats(self, contacts: List[Dict], current_situation: Dict = None) -> Dict[str, Any]:
+    def analyze_threats(
+        self, contacts: List[Dict], current_situation: Dict = None
+    ) -> Dict[str, Any]:
         prompt = f"Analyze these enemy contacts and assess threat:\nContacts: {json.dumps(contacts[:10], default=str)}"
         if current_situation:
             prompt += f"\nCurrent situation: {json.dumps(current_situation, default=str)}"
         if self._llm:
             try:
-                response = self._llm.invoke([
-                    SystemMessage(content=S2_SYSTEM_PROMPT),
-                    HumanMessage(content=prompt),
-                ])
+                response = self._llm.invoke(
+                    [
+                        SystemMessage(content=S2_SYSTEM_PROMPT),
+                        HumanMessage(content=prompt),
+                    ]
+                )
                 try:
                     return json.loads(response.content)
                 except json.JSONDecodeError:
@@ -63,21 +69,30 @@ class S2IntelAgent:
             "analysis": f"{n} contacts detected, {high_conf} high-confidence. Average confidence: {avg_conf:.2f}",
             "recommendation": f"Recommend {'increased vigilance' if threat > 0.6 else 'normal operations'}",
             "enemy_coa_prediction": coa,
-            "priority_intel_requirements": ["Confirm enemy strength", "Identify unit type", "Determine intent"],
+            "priority_intel_requirements": [
+                "Confirm enemy strength",
+                "Identify unit type",
+                "Determine intent",
+            ],
         }
 
     def generate_intsum(self, contacts: List[Dict], weather: Dict = None) -> str:
         analysis = self.analyze_threats(contacts)
-        return (f"INTELLIGENCE SUMMARY\n"
-                f"Threat Level: {analysis['threat_level']}\n"
-                f"Analysis: {analysis['analysis']}\n"
-                f"Enemy COA: {analysis['enemy_coa_prediction']}\n"
-                f"Recommendation: {analysis['recommendation']}")
+        return (
+            f"INTELLIGENCE SUMMARY\n"
+            f"Threat Level: {analysis['threat_level']}\n"
+            f"Analysis: {analysis['analysis']}\n"
+            f"Enemy COA: {analysis['enemy_coa_prediction']}\n"
+            f"Recommendation: {analysis['recommendation']}"
+        )
 
 
 if __name__ == "__main__":
     agent = S2IntelAgent()
-    contacts = [{"uid": "RED-01", "confidence": 0.85, "lat": 34.3}, {"uid": "RED-02", "confidence": 0.6, "lat": 34.25}]
+    contacts = [
+        {"uid": "RED-01", "confidence": 0.85, "lat": 34.3},
+        {"uid": "RED-02", "confidence": 0.6, "lat": 34.25},
+    ]
     result = agent.analyze_threats(contacts)
     print(f"Threat: {result['threat_level']}, COA: {result['enemy_coa_prediction']}")
     print("s2_intel_agent.py OK")

@@ -16,7 +16,8 @@ log = get_logger("NATS_SUBSCRIBER")
 
 try:
     import nats
-    from nats.js.api import ConsumerConfig, DeliverPolicy
+    from nats.js.api import DeliverPolicy
+
     NATS_AVAILABLE = True
 except ImportError:
     NATS_AVAILABLE = False

@@ -1,9 +1,10 @@
 """Internal message bus for inter-module communication."""
-import asyncio
+
 import time
 from collections import defaultdict
 from typing import Any, Callable, Dict, List
 from utils.logger import get_logger
+
 log = get_logger("MSG_BUS")
 
 
@@ -40,7 +41,7 @@ class MessageBus:
         msg = Message(topic, payload, sender, priority)
         self._message_log.append(msg)
         if len(self._message_log) > self._max_log:
-            self._message_log = self._message_log[-self._max_log:]
+            self._message_log = self._message_log[-self._max_log :]
         delivered = 0
         for callback in self._subscribers.get(topic, []):
             try:

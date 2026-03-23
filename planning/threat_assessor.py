@@ -2,21 +2,25 @@
 Bayesian threat assessment using pgmpy Bayesian network.
 Nodes: EnemyIntention, EnemyCapability, TerrainAdvantage, AirThreat, IntelQuality → ThreatLevel.
 """
+
 import numpy as np
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 from utils.logger import get_logger
+
 log = get_logger("THREAT")
 
 try:
     from pgmpy.models import DiscreteBayesianNetwork
     from pgmpy.factors.discrete import TabularCPD
     from pgmpy.inference import VariableElimination
+
     PGMPY_AVAILABLE = True
 except ImportError:
     try:
         from pgmpy.models import BayesianNetwork as DiscreteBayesianNetwork
         from pgmpy.factors.discrete import TabularCPD
         from pgmpy.inference import VariableElimination
+
         PGMPY_AVAILABLE = True
     except ImportError:
         PGMPY_AVAILABLE = False
@@ -36,13 +40,15 @@ class BayesianThreatAssessor:
         if not PGMPY_AVAILABLE:
             log.warning("pgmpy not available, using simplified threat model")
             return
-        model = DiscreteBayesianNetwork([
-            ("EnemyIntention", "ThreatLevel"),
-            ("EnemyCapability", "ThreatLevel"),
-            ("TerrainAdvantage", "ThreatLevel"),
-            ("AirThreat", "ThreatLevel"),
-            ("IntelQuality", "ThreatLevel"),
-        ])
+        model = DiscreteBayesianNetwork(
+            [
+                ("EnemyIntention", "ThreatLevel"),
+                ("EnemyCapability", "ThreatLevel"),
+                ("TerrainAdvantage", "ThreatLevel"),
+                ("AirThreat", "ThreatLevel"),
+                ("IntelQuality", "ThreatLevel"),
+            ]
+        )
         # CPDs: 0=LOW, 1=HIGH for parent nodes; 0=LOW,1=MED,2=HIGH for ThreatLevel
         cpd_intent = TabularCPD("EnemyIntention", 2, [[0.6], [0.4]])
         cpd_cap = TabularCPD("EnemyCapability", 2, [[0.5], [0.5]])
@@ -64,8 +70,16 @@ class BayesianThreatAssessor:
             else:
                 threat_cpd_values[:, i] = [0.05, 0.2, 0.75]
         cpd_threat = TabularCPD(
-            "ThreatLevel", 3, threat_cpd_values.tolist(),
-            evidence=["EnemyIntention", "EnemyCapability", "TerrainAdvantage", "AirThreat", "IntelQuality"],
+            "ThreatLevel",
+            3,
+            threat_cpd_values.tolist(),
+            evidence=[
+                "EnemyIntention",
+                "EnemyCapability",
+                "TerrainAdvantage",
+                "AirThreat",
+                "IntelQuality",
+            ],
             evidence_card=[2, 2, 2, 2, 2],
         )
         model.add_cpds(cpd_intent, cpd_cap, cpd_terrain, cpd_air, cpd_intel, cpd_threat)
@@ -94,10 +108,16 @@ class BayesianThreatAssessor:
 
     def update_from_contact(self, contact_dict: Dict[str, Any]) -> None:
         confidence = contact_dict.get("confidence", 0.5)
-        self.update_evidence({
-            "EnemyIntention": 1 if confidence > 0.6 else 0,
-            "EnemyCapability": 1 if contact_dict.get("strength_estimate", "") in ("company", "battalion") else 0,
-        })
+        self.update_evidence(
+            {
+                "EnemyIntention": 1 if confidence > 0.6 else 0,
+                "EnemyCapability": (
+                    1
+                    if contact_dict.get("strength_estimate", "") in ("company", "battalion")
+                    else 0
+                ),
+            }
+        )
 
     def get_threat_map(self, grid_shape: tuple, contacts: List[Dict] = None) -> np.ndarray:
         base_threat = self.query_threat()

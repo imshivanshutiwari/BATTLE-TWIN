@@ -1,14 +1,17 @@
 """Terrain classifier training — classifies terrain from DEM+imagery into GO/SLOW-GO/NO-GO."""
+
 import numpy as np
 from pathlib import Path
 from typing import Dict, Tuple
 from utils.logger import get_logger
 from utils.checkpoint import CheckpointManager
+
 log = get_logger("TRAIN_CLASS")
 
 try:
     import torch
     import torch.nn as nn
+
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -21,11 +24,19 @@ class TerrainClassifierNet(nn.Module if TORCH_AVAILABLE else object):
         if TORCH_AVAILABLE:
             super().__init__()
             self.features = nn.Sequential(
-                nn.Conv2d(1, 16, 3, padding=1), nn.ReLU(), nn.MaxPool2d(2),
-                nn.Conv2d(16, 32, 3, padding=1), nn.ReLU(), nn.MaxPool2d(2),
-                nn.Conv2d(32, 64, 3, padding=1), nn.ReLU(), nn.AdaptiveAvgPool2d(1),
+                nn.Conv2d(1, 16, 3, padding=1),
+                nn.ReLU(),
+                nn.MaxPool2d(2),
+                nn.Conv2d(16, 32, 3, padding=1),
+                nn.ReLU(),
+                nn.MaxPool2d(2),
+                nn.Conv2d(32, 64, 3, padding=1),
+                nn.ReLU(),
+                nn.AdaptiveAvgPool2d(1),
             )
-            self.classifier = nn.Sequential(nn.Flatten(), nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, n_classes))
+            self.classifier = nn.Sequential(
+                nn.Flatten(), nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, n_classes)
+            )
 
     def forward(self, x):
         return self.classifier(self.features(x))
@@ -75,13 +86,18 @@ class TerrainClassifierTrainer:
             loss.backward()
             optimizer.step()
             acc = (out.argmax(1) == y_tensor).float().mean().item()
-            history.append({"epoch": epoch+1, "loss": loss.item(), "accuracy": acc})
-            if (epoch+1) % 5 == 0:
+            history.append({"epoch": epoch + 1, "loss": loss.item(), "accuracy": acc})
+            if (epoch + 1) % 5 == 0:
                 log.info(f"Epoch {epoch+1}/{epochs}: loss={loss.item():.4f} acc={acc:.3f}")
         # Save
-        self.ckpt.save({"model_state": model.state_dict(), "history": history}, tag="terrain_classifier")
-        return {"final_loss": history[-1]["loss"], "final_accuracy": history[-1]["accuracy"],
-                "epochs": epochs}
+        self.ckpt.save(
+            {"model_state": model.state_dict(), "history": history}, tag="terrain_classifier"
+        )
+        return {
+            "final_loss": history[-1]["loss"],
+            "final_accuracy": history[-1]["accuracy"],
+            "epochs": epochs,
+        }
 
 
 if __name__ == "__main__":

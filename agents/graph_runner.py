@@ -1,17 +1,18 @@
 """LangGraph multi-agent graph runner — orchestrates all agents."""
-import json
-import time
-from typing import Any, Dict, List, Optional
+
+from typing import Any, Dict
 from agents.s2_intel_agent import S2IntelAgent
 from agents.s3_maneuver_agent import S3ManeuverAgent
 from agents.fso_fires_agent import FSOFiresAgent
 from agents.s4_logistics_agent import S4LogisticsAgent
 from agents.css_medevac_agent import CSSMedevacAgent
 from utils.logger import get_logger
+
 log = get_logger("GRAPH_RUNNER")
 
 try:
     from langgraph.graph import StateGraph, END
+
     LANGGRAPH_AVAILABLE = True
 except ImportError:
     LANGGRAPH_AVAILABLE = False
@@ -19,6 +20,7 @@ except ImportError:
 
 class AgentState(dict):
     """Typed state dictionary for the multi-agent graph."""
+
     pass
 
 
@@ -76,7 +78,9 @@ class GraphRunner:
 
     def _fso_node(self, state: AgentState) -> AgentState:
         targets = state.get("contacts", [])
-        friendlies = [{"lat": u.get("lat", 0), "lon": u.get("lon", 0)} for u in state.get("units", [])]
+        friendlies = [
+            {"lat": u.get("lat", 0), "lon": u.get("lon", 0)} for u in state.get("units", [])
+        ]
         result = self.fso.plan_fires(targets, friendlies)
         state["fso_result"] = result
         return state
@@ -92,11 +96,13 @@ class GraphRunner:
         return state
 
     def run_all(self, battlefield_state: Dict) -> Dict[str, Any]:
-        initial_state = AgentState({
-            "units": list(battlefield_state.get("units", {}).values()),
-            "contacts": list(battlefield_state.get("contacts", {}).values()),
-            "objectives": battlefield_state.get("objectives", []),
-        })
+        initial_state = AgentState(
+            {
+                "units": list(battlefield_state.get("units", {}).values()),
+                "contacts": list(battlefield_state.get("contacts", {}).values()),
+                "objectives": battlefield_state.get("objectives", []),
+            }
+        )
         if self._graph:
             try:
                 result = self._graph.invoke(initial_state)
@@ -115,8 +121,13 @@ class GraphRunner:
 
     def run_single(self, agent_name: str, state: Dict) -> Dict:
         agent_state = AgentState(state)
-        nodes = {"s2": self._s2_node, "s3": self._s3_node, "fso": self._fso_node,
-                 "s4": self._s4_node, "css": self._css_node}
+        nodes = {
+            "s2": self._s2_node,
+            "s3": self._s3_node,
+            "fso": self._fso_node,
+            "s4": self._s4_node,
+            "css": self._css_node,
+        }
         if agent_name in nodes:
             return dict(nodes[agent_name](agent_state))
         raise ValueError(f"Unknown agent: {agent_name}")
@@ -125,8 +136,17 @@ class GraphRunner:
 if __name__ == "__main__":
     runner = GraphRunner()
     state = {
-        "units": {"B01": {"uid": "B01", "callsign": "WARHORSE-1", "lat": 34.05, "lon": -117.45,
-                           "ammo_pct": 60, "fuel_pct": 70, "water_pct": 80}},
+        "units": {
+            "B01": {
+                "uid": "B01",
+                "callsign": "WARHORSE-1",
+                "lat": 34.05,
+                "lon": -117.45,
+                "ammo_pct": 60,
+                "fuel_pct": 70,
+                "water_pct": 80,
+            }
+        },
         "contacts": {"R01": {"uid": "R01", "lat": 34.3, "lon": -117.15, "confidence": 0.8}},
         "objectives": [{"name": "OBJ ALPHA"}],
     }

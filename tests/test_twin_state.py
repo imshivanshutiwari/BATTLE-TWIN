@@ -1,5 +1,6 @@
 """Tests for digital_twin/twin_state.py."""
-from digital_twin.twin_state import BattlefieldState, UnitState, ContactReport, PhaseLine, Objective
+
+from digital_twin.twin_state import BattlefieldState, UnitState, ContactReport
 
 
 def test_unit_state_creation():
@@ -31,7 +32,9 @@ def test_contact_report():
 
 def test_battlefield_state():
     state = BattlefieldState()
-    state.add_unit(UnitState(uid="B01", callsign="W1", unit_type="infantry", lat=34.05, lon=-117.45))
+    state.add_unit(
+        UnitState(uid="B01", callsign="W1", unit_type="infantry", lat=34.05, lon=-117.45)
+    )
     state.add_contact(ContactReport(uid="R01", callsign="H1", lat=34.3, lon=-117.15))
     assert len(state.units) == 1
     assert len(state.contacts) == 1
@@ -53,6 +56,7 @@ def test_ue5_serialization():
     ue5_bytes = state.serialize_for_ue5()
     assert len(ue5_bytes) > 10
     import json
+
     data = json.loads(ue5_bytes)
     assert data["seq"] == state.nats_sequence
 

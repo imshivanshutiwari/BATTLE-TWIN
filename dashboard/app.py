@@ -1,4 +1,5 @@
 """Main Dash app entry point. Assembles layout + callbacks, auto-opens browser."""
+
 import os
 import threading
 import webbrowser
@@ -42,9 +43,13 @@ def run_dashboard(port=None, debug=None, open_browser=True):
     app = create_app()
 
     if open_browser:
+
         def _open():
-            import time; time.sleep(1.5)
+            import time
+
+            time.sleep(1.5)
             webbrowser.open(f"http://localhost:{port}")
+
         threading.Thread(target=_open, daemon=True).start()
 
     log.info(f"C2 Dashboard starting on http://localhost:{port}")

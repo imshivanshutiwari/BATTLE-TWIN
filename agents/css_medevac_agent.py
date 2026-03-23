@@ -1,7 +1,8 @@
 """CSS MEDEVAC agent — 9-line MEDEVAC requests and CASEVAC coordination."""
-import json
-from typing import Any, Dict, List
+
+from typing import Dict, List
 from utils.logger import get_logger
+
 log = get_logger("AGENT_CSS")
 
 
@@ -12,10 +13,18 @@ class CSSMedevacAgent:
         self._pending: List[Dict] = []
         self._completed: List[Dict] = []
 
-    def generate_9line(self, unit_id: str, lat: float, lon: float,
-                       n_patients: int = 1, precedence: str = "URGENT",
-                       security: str = "NO_ENEMY", marking: str = "PANELS") -> Dict:
+    def generate_9line(
+        self,
+        unit_id: str,
+        lat: float,
+        lon: float,
+        n_patients: int = 1,
+        precedence: str = "URGENT",
+        security: str = "NO_ENEMY",
+        marking: str = "PANELS",
+    ) -> Dict:
         from utils.mgrs_converter import MGRSConverter
+
         mgrs = MGRSConverter()
         grid = mgrs.latlon_to_mgrs_string(lat, lon)
         request = {
@@ -30,7 +39,8 @@ class CSSMedevacAgent:
             "line9_terrain": "FLAT_TERRAIN",
             "precedence": precedence,
             "requesting_unit": unit_id,
-            "lat": lat, "lon": lon,
+            "lat": lat,
+            "lon": lon,
             "status": "REQUESTED",
         }
         self._pending.append(request)
@@ -40,8 +50,10 @@ class CSSMedevacAgent:
     def process_requests(self, available_assets: List[str] = None) -> List[Dict]:
         assets = available_assets or ["DUSTOFF-1", "DUSTOFF-2"]
         dispatched = []
-        sorted_pending = sorted(self._pending,
-            key=lambda r: {"URGENT": 0, "PRIORITY": 1, "ROUTINE": 2}.get(r["precedence"], 3))
+        sorted_pending = sorted(
+            self._pending,
+            key=lambda r: {"URGENT": 0, "PRIORITY": 1, "ROUTINE": 2}.get(r["precedence"], 3),
+        )
         for i, req in enumerate(sorted_pending):
             if i < len(assets):
                 req["status"] = "DISPATCHED"

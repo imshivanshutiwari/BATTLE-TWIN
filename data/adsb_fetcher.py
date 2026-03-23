@@ -10,13 +10,12 @@ Fetches REAL aircraft position data including:
 
 import asyncio
 import time
-from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
+from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple
 
 import requests
-import numpy as np
 import pandas as pd
 
 from utils.logger import get_logger
@@ -28,17 +27,40 @@ CACHE_DIR = Path("data/cache")
 
 # Known military callsign prefixes
 MILITARY_PREFIXES = [
-    "RCH", "REACH", "JAKE", "DUKE", "EVAC", "DUSTOFF",
-    "PEDRO", "JOLLY", "KING", "ROCKY", "GORDO", "TEAL",
-    "DOOM", "HAVOC", "GUNFIGHTER", "REAPER", "HUNTER",
-    "VIPER", "COBRA", "APACHE", "BLACKHAWK", "CHINOOK",
-    "RFF", "CNV", "NAVY", "TOPCAT", "SENTRY",
+    "RCH",
+    "REACH",
+    "JAKE",
+    "DUKE",
+    "EVAC",
+    "DUSTOFF",
+    "PEDRO",
+    "JOLLY",
+    "KING",
+    "ROCKY",
+    "GORDO",
+    "TEAL",
+    "DOOM",
+    "HAVOC",
+    "GUNFIGHTER",
+    "REAPER",
+    "HUNTER",
+    "VIPER",
+    "COBRA",
+    "APACHE",
+    "BLACKHAWK",
+    "CHINOOK",
+    "RFF",
+    "CNV",
+    "NAVY",
+    "TOPCAT",
+    "SENTRY",
 ]
 
 
 @dataclass
 class Aircraft:
     """Single aircraft state from ADS-B data."""
+
     icao24: str
     callsign: str
     latitude: float
@@ -177,9 +199,7 @@ class ADSBFetcher:
 
         log.info(f"Fetching live aircraft in bbox {bbox}")
         try:
-            response = self.session.get(
-                self.api_url, params=params, timeout=15
-            )
+            response = self.session.get(self.api_url, params=params, timeout=15)
             response.raise_for_status()
             data = response.json()
         except requests.RequestException as e:
@@ -217,10 +237,7 @@ class ADSBFetcher:
         """
         all_aircraft = self.fetch_live_aircraft(bbox)
         military = [ac for ac in all_aircraft if ac.is_military_callsign()]
-        log.info(
-            f"Filtered {len(military)} military callsigns "
-            f"from {len(all_aircraft)} total"
-        )
+        log.info(f"Filtered {len(military)} military callsigns " f"from {len(all_aircraft)} total")
         return military
 
     async def stream_continuous(
@@ -253,20 +270,21 @@ class ADSBFetcher:
         if key not in self._track_history:
             self._track_history[key] = []
 
-        self._track_history[key].append({
-            "timestamp": aircraft.time_position or aircraft.last_contact,
-            "latitude": aircraft.latitude,
-            "longitude": aircraft.longitude,
-            "altitude_m": aircraft.altitude_m,
-            "heading_deg": aircraft.heading_deg,
-            "speed_mps": aircraft.speed_mps,
-        })
+        self._track_history[key].append(
+            {
+                "timestamp": aircraft.time_position or aircraft.last_contact,
+                "latitude": aircraft.latitude,
+                "longitude": aircraft.longitude,
+                "altitude_m": aircraft.altitude_m,
+                "heading_deg": aircraft.heading_deg,
+                "speed_mps": aircraft.speed_mps,
+            }
+        )
 
         # Keep last 6 hours of data
         cutoff = time.time() - 6 * 3600
         self._track_history[key] = [
-            pt for pt in self._track_history[key]
-            if pt["timestamp"] > cutoff
+            pt for pt in self._track_history[key] if pt["timestamp"] > cutoff
         ]
 
     def cache_track_history(
@@ -287,8 +305,14 @@ class ADSBFetcher:
         tracks = self._track_history.get(aircraft_id, [])
         if not tracks:
             return pd.DataFrame(
-                columns=["timestamp", "latitude", "longitude",
-                         "altitude_m", "heading_deg", "speed_mps"]
+                columns=[
+                    "timestamp",
+                    "latitude",
+                    "longitude",
+                    "altitude_m",
+                    "heading_deg",
+                    "speed_mps",
+                ]
             )
 
         cutoff = time.time() - hours * 3600
@@ -299,23 +323,22 @@ class ADSBFetcher:
 
     def get_all_tracks(self) -> Dict[str, pd.DataFrame]:
         """Get track history for all tracked aircraft."""
-        return {
-            icao24: self.cache_track_history(icao24)
-            for icao24 in self._track_history
-        }
+        return {icao24: self.cache_track_history(icao24) for icao24 in self._track_history}
 
     def to_geojson(self, aircraft_list: List[Aircraft]) -> Dict[str, Any]:
         """Convert aircraft list to GeoJSON FeatureCollection."""
         features = []
         for ac in aircraft_list:
-            features.append({
-                "type": "Feature",
-                "geometry": {
-                    "type": "Point",
-                    "coordinates": [ac.longitude, ac.latitude, ac.altitude_m],
-                },
-                "properties": ac.to_dict(),
-            })
+            features.append(
+                {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [ac.longitude, ac.latitude, ac.altitude_m],
+                    },
+                    "properties": ac.to_dict(),
+                }
+            )
         return {
             "type": "FeatureCollection",
             "features": features,
@@ -332,8 +355,10 @@ if __name__ == "__main__":
         aircraft = fetcher.fetch_live_aircraft(bbox)
         print(f"Aircraft found: {len(aircraft)}")
         for ac in aircraft[:5]:
-            print(f"  {ac.callsign.strip():10s} {ac.icao24} "
-                  f"alt={ac.altitude_m:.0f}m spd={ac.speed_mps:.0f}m/s")
+            print(
+                f"  {ac.callsign.strip():10s} {ac.icao24} "
+                f"alt={ac.altitude_m:.0f}m spd={ac.speed_mps:.0f}m/s"
+            )
     except Exception as e:
         print(f"ADS-B fetch error: {e}")
 

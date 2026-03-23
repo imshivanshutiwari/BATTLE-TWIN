@@ -1,10 +1,11 @@
 """OLSR MANET routing protocol simulation."""
-import time
+
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Set, Tuple
+from typing import Dict, List, Set, Tuple
 import networkx as nx
 import numpy as np
 from utils.logger import get_logger
+
 log = get_logger("MANET")
 
 
@@ -28,7 +29,7 @@ class MANETRouter:
         self.tc_interval = tc_interval_s
         self.nodes: Dict[str, MANETNode] = {}
         self.graph = nx.Graph()
-        self._link_quality: Dict[Tuple[str,str], float] = {}
+        self._link_quality: Dict[Tuple[str, str], float] = {}
 
     def add_node(self, node_id: str, lat: float, lon: float, range_m: float = 5000.0):
         node = MANETNode(node_id=node_id, lat=lat, lon=lon, radio_range_m=range_m)
@@ -40,8 +41,8 @@ class MANETRouter:
         p1, p2 = np.radians(n1.lat), np.radians(n2.lat)
         dp = np.radians(n2.lat - n1.lat)
         dl = np.radians(n2.lon - n1.lon)
-        a = np.sin(dp/2)**2 + np.cos(p1)*np.cos(p2)*np.sin(dl/2)**2
-        return R * 2 * np.arctan2(np.sqrt(a), np.sqrt(1-a))
+        a = np.sin(dp / 2) ** 2 + np.cos(p1) * np.cos(p2) * np.sin(dl / 2) ** 2
+        return R * 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
 
     def discover_neighbors(self):
         for nid, node in self.nodes.items():
@@ -61,7 +62,7 @@ class MANETRouter:
                     quality = max(0.1, 1.0 - dist / min_range)
                     self._link_quality[(nid1, nid2)] = quality
                     self._link_quality[(nid2, nid1)] = quality
-                    self.graph.add_edge(nid1, nid2, weight=1.0/quality, distance=dist)
+                    self.graph.add_edge(nid1, nid2, weight=1.0 / quality, distance=dist)
 
     def compute_mpr(self):
         for nid, node in self.nodes.items():
@@ -73,9 +74,13 @@ class MANETRouter:
             mpr = set()
             covered = set()
             while two_hop - covered:
-                best = max(node.neighbors - mpr,
-                           key=lambda n: len(self.nodes[n].neighbors & (two_hop - covered))
-                           if n in self.nodes else 0, default=None)
+                best = max(
+                    node.neighbors - mpr,
+                    key=lambda n: (
+                        len(self.nodes[n].neighbors & (two_hop - covered)) if n in self.nodes else 0
+                    ),
+                    default=None,
+                )
                 if best is None:
                     break
                 mpr.add(best)
@@ -130,8 +135,13 @@ class MANETRouter:
 
 if __name__ == "__main__":
     router = MANETRouter()
-    units = [("B01",34.05,-117.45),("B02",34.07,-117.42),("B03",34.10,-117.38),
-             ("B04",34.12,-117.35),("B05",34.15,-117.30)]
+    units = [
+        ("B01", 34.05, -117.45),
+        ("B02", 34.07, -117.42),
+        ("B03", 34.10, -117.38),
+        ("B04", 34.12, -117.35),
+        ("B05", 34.15, -117.30),
+    ]
     for uid, lat, lon in units:
         router.add_node(uid, lat, lon, range_m=8000)
     router.compute_routing_tables()

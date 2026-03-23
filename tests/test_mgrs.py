@@ -1,4 +1,5 @@
 """Tests for utils/mgrs_converter.py."""
+
 from utils.mgrs_converter import MGRSConverter, MGRSCoord
 
 

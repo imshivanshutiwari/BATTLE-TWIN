@@ -2,8 +2,8 @@
 BATTLE-TWIN main entry point.
 Starts simulation + dashboard, auto-opens browser.
 """
+
 import argparse
-import threading
 import time
 from simulation.sim_runner import SimulationRunner
 from dashboard.app import run_dashboard
@@ -30,7 +30,7 @@ def main():
 
     # Start simulation in background thread
     runner = SimulationRunner(sim_speed=args.sim_speed, tick_rate_hz=args.tick_rate)
-    sim_thread = runner.run_in_thread(max_ticks=args.max_ticks)
+    runner.run_in_thread(max_ticks=args.max_ticks)
     time.sleep(0.5)
 
     # Start dashboard (blocks main thread)

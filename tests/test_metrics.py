@@ -1,4 +1,5 @@
 """Tests for evaluation/metrics.py."""
+
 import numpy as np
 from evaluation.metrics import C2Metrics
 
@@ -25,7 +26,7 @@ def test_sla_check():
         m.record_latency(20)
         m.record_sync_error(0.1)
     sla = m.check_sla()
-    assert sla["all_pass"] == True
+    assert sla["all_pass"] is True
 
 
 def test_throughput_recording():

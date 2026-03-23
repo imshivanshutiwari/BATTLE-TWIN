@@ -118,15 +118,17 @@ class StateReconciler:
                 )
                 result[field] = resolved
 
-                self._conflict_log.append(ConflictRecord(
-                    field=field,
-                    value_a=val_a,
-                    value_b=val_b,
-                    source_a=source_a,
-                    source_b=source_b,
-                    resolved_value=resolved,
-                    strategy=self.strategy,
-                ))
+                self._conflict_log.append(
+                    ConflictRecord(
+                        field=field,
+                        value_a=val_a,
+                        value_b=val_b,
+                        source_a=source_a,
+                        source_b=source_b,
+                        resolved_value=resolved,
+                        strategy=self.strategy,
+                    )
+                )
 
             elif in_a:
                 result[field] = update_a[field]
@@ -151,12 +153,10 @@ class StateReconciler:
 
         elif self.strategy == "PRIORITY_SOURCE":
             idx_a = (
-                self.priority_sources.index(source_a)
-                if source_a in self.priority_sources else 999
+                self.priority_sources.index(source_a) if source_a in self.priority_sources else 999
             )
             idx_b = (
-                self.priority_sources.index(source_b)
-                if source_b in self.priority_sources else 999
+                self.priority_sources.index(source_b) if source_b in self.priority_sources else 999
             )
             return val_a if idx_a <= idx_b else val_b
 
@@ -209,17 +209,20 @@ class StateReconciler:
             # Build a "current-state slice" containing only fields touched by this delta
             current_slice = {k: result[k] for k in delta if k in result}
             result = self.reconcile(
-                result, current_slice, delta,
-                prev_source, source, prev_ts, ts,
+                result,
+                current_slice,
+                delta,
+                prev_source,
+                source,
+                prev_ts,
+                ts,
             )
             prev_source = source
             prev_ts = ts
 
         return result
 
-    def get_conflict_log(
-        self, last_n: int = 50
-    ) -> List[Dict[str, Any]]:
+    def get_conflict_log(self, last_n: int = 50) -> List[Dict[str, Any]]:
         """Get recent conflict records."""
         return [
             {
@@ -247,10 +250,7 @@ if __name__ == "__main__":
     update_a = {"lat": 34.06, "speed_mps": 2.5}
     update_b = {"lat": 34.07, "speed_mps": 3.0}
 
-    result = reconciler.reconcile(
-        current, update_a, update_b,
-        "GPS", "IMU", 1000.0, 1001.0
-    )
+    result = reconciler.reconcile(current, update_a, update_b, "GPS", "IMU", 1000.0, 1001.0)
     print(f"Reconciled: {result}")
     print(f"Conflicts: {len(reconciler.get_conflict_log())}")
 

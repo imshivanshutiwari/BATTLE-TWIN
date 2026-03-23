@@ -1,7 +1,9 @@
 """Terrain slope + trafficability calculator."""
+
 import numpy as np
-from typing import Dict, Tuple
+from typing import Dict
 from utils.logger import get_logger
+
 log = get_logger("SLOPE")
 
 

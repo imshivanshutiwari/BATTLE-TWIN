@@ -2,8 +2,8 @@
 LangGraph StateGraph — multi-agent C2 decision support graph.
 Wires: intel → threat → [coa + fires] (parallel) → logistics → medevac → commander → END
 """
-import json
-from typing import Any, Dict, List, Optional
+
+from typing import Dict
 from agents.s2_intel_agent import S2IntelAgent
 from agents.s3_maneuver_agent import S3ManeuverAgent
 from agents.fso_fires_agent import FSOFiresAgent
@@ -11,10 +11,12 @@ from agents.s4_logistics_agent import S4LogisticsAgent
 from agents.css_medevac_agent import CSSMedevacAgent
 from agents.commander_agent import CommanderAgent
 from utils.logger import get_logger
+
 log = get_logger("AGENT_GRAPH")
 
 try:
     from langgraph.graph import StateGraph, END
+
     LANGGRAPH_AVAILABLE = True
 except ImportError:
     LANGGRAPH_AVAILABLE = False
@@ -22,6 +24,7 @@ except ImportError:
 
 class AgentState(dict):
     """Typed state for LangGraph."""
+
     pass
 
 
@@ -29,7 +32,7 @@ class BattleTwinAgentGraph:
     """
     LangGraph StateGraph with 6 specialized agents.
 
-    Graph: intel_fusion → threat_assess → [coa_generate, fires_coord] → 
+    Graph: intel_fusion → threat_assess → [coa_generate, fires_coord] →
            logistics_plan → medevac_coord → commander_brief → END
     """
 
@@ -71,7 +74,9 @@ class BattleTwinAgentGraph:
 
     def _intel_node(self, state: AgentState) -> AgentState:
         contacts = state.get("contacts", [])
-        result = self.intel.analyze_threats(contacts if isinstance(contacts, list) else list(contacts.values()))
+        result = self.intel.analyze_threats(
+            contacts if isinstance(contacts, list) else list(contacts.values())
+        )
         state["s2_result"] = result
         state["threat_level"] = result.get("threat_level", 0.3)
         state["current_reports"] = [result.get("analysis", "")]
@@ -79,6 +84,7 @@ class BattleTwinAgentGraph:
 
     def _threat_node(self, state: AgentState) -> AgentState:
         from planning.threat_assessor import BayesianThreatAssessor
+
         assessor = BayesianThreatAssessor()
         if state.get("threat_level", 0) > 0.5:
             assessor.update_evidence({"EnemyIntention": 1})
@@ -87,9 +93,13 @@ class BattleTwinAgentGraph:
 
     def _coa_node(self, state: AgentState) -> AgentState:
         from planning.mcts_coa import MCTSCourseOfAction
+
         mcts = MCTSCourseOfAction()
-        sim_state = {"force_ratio": state.get("force_ratio", 1.5),
-                     "terrain_score": 0.5, "logistics_sustainability": 0.7}
+        sim_state = {
+            "force_ratio": state.get("force_ratio", 1.5),
+            "terrain_score": 0.5,
+            "logistics_sustainability": 0.7,
+        }
         coas = mcts.generate_coas(sim_state, n_coas=5, n_simulations=200)
         state["coas"] = [c.to_dict() for c in coas]
         units = state.get("units", {})
@@ -102,8 +112,10 @@ class BattleTwinAgentGraph:
         contacts = state.get("contacts", {})
         contact_list = list(contacts.values()) if isinstance(contacts, dict) else contacts
         units = state.get("units", {})
-        friendly_list = [{"lat": u.get("lat", 0), "lon": u.get("lon", 0)}
-                         for u in (units.values() if isinstance(units, dict) else units)]
+        friendly_list = [
+            {"lat": u.get("lat", 0), "lon": u.get("lon", 0)}
+            for u in (units.values() if isinstance(units, dict) else units)
+        ]
         state["fso_result"] = self.fires.plan_fires(contact_list, friendly_list)
         return state
 
@@ -123,9 +135,12 @@ class BattleTwinAgentGraph:
         state["decisions"] = [decision]
         state["alerts"] = state.get("alerts", [])
         state["agent_outputs"] = {
-            "s2": state.get("s2_result"), "s3": state.get("s3_result"),
-            "fso": state.get("fso_result"), "s4": state.get("s4_result"),
-            "css": state.get("css_result"), "commander": decision,
+            "s2": state.get("s2_result"),
+            "s3": state.get("s3_result"),
+            "fso": state.get("fso_result"),
+            "s4": state.get("s4_result"),
+            "css": state.get("css_result"),
+            "commander": decision,
         }
         return state
 
@@ -142,19 +157,30 @@ class BattleTwinAgentGraph:
         return self._sequential_run(initial)
 
     def _sequential_run(self, state: AgentState) -> Dict:
-        for node_fn in [self._intel_node, self._threat_node, self._coa_node,
-                        self._fires_node, self._logistics_node,
-                        self._medevac_node, self._commander_node]:
+        for node_fn in [
+            self._intel_node,
+            self._threat_node,
+            self._coa_node,
+            self._fires_node,
+            self._logistics_node,
+            self._medevac_node,
+            self._commander_node,
+        ]:
             state = node_fn(state)
         return dict(state)
 
     async def stream_decisions(self, state: Dict):
         """Yield each agent's output as it completes."""
         initial = AgentState(state)
-        nodes = [("intel", self._intel_node), ("threat", self._threat_node),
-                 ("coa", self._coa_node), ("fires", self._fires_node),
-                 ("logistics", self._logistics_node), ("medevac", self._medevac_node),
-                 ("commander", self._commander_node)]
+        nodes = [
+            ("intel", self._intel_node),
+            ("threat", self._threat_node),
+            ("coa", self._coa_node),
+            ("fires", self._fires_node),
+            ("logistics", self._logistics_node),
+            ("medevac", self._medevac_node),
+            ("commander", self._commander_node),
+        ]
         for name, fn in nodes:
             initial = fn(initial)
             yield name, dict(initial)
@@ -163,8 +189,17 @@ class BattleTwinAgentGraph:
 if __name__ == "__main__":
     graph = BattleTwinAgentGraph()
     state = {
-        "units": {"B01": {"uid": "B01", "callsign": "W1", "lat": 34.05, "lon": -117.45,
-                           "ammo_pct": 60, "fuel_pct": 70, "water_pct": 80}},
+        "units": {
+            "B01": {
+                "uid": "B01",
+                "callsign": "W1",
+                "lat": 34.05,
+                "lon": -117.45,
+                "ammo_pct": 60,
+                "fuel_pct": 70,
+                "water_pct": 80,
+            }
+        },
         "contacts": {"R01": {"uid": "R01", "lat": 34.3, "lon": -117.15, "confidence": 0.8}},
         "objectives": [{"name": "OBJ ALPHA"}],
     }

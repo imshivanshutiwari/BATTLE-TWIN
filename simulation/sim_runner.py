@@ -1,6 +1,6 @@
 """Simulation runner — orchestrates engine + agents + dashboard."""
+
 import asyncio
-import time
 import threading
 from typing import Optional
 from simulation.sim_engine import SimulationEngine
@@ -9,6 +9,7 @@ from digital_twin.nats_publisher import NATSPublisher
 from agents.graph_runner import GraphRunner
 from utils.logger import get_logger
 from utils.config_loader import load_config
+
 log = get_logger("SIM_RUNNER")
 
 
@@ -18,7 +19,7 @@ class SimulationRunner:
     def __init__(self, sim_speed: float = 1.0, tick_rate_hz: float = 10.0):
         self.sim_speed = sim_speed
         self.tick_rate = tick_rate_hz
-        self.engine = SimulationEngine(dt_s=1.0/tick_rate_hz, speed_multiplier=sim_speed)
+        self.engine = SimulationEngine(dt_s=1.0 / tick_rate_hz, speed_multiplier=sim_speed)
         self.publisher = NATSPublisher()
         self.graph_runner = GraphRunner()
         self.state: Optional[BattlefieldState] = None
@@ -32,7 +33,9 @@ class SimulationRunner:
         except Exception as e:
             log.warning(f"Config load failed: {e}, using defaults")
             self.state = BattlefieldState()
-        log.info(f"Simulation initialized: {len(self.state.units)} units, {len(self.state.contacts)} contacts")
+        log.info(
+            f"Simulation initialized: {len(self.state.units)} units, {len(self.state.contacts)} contacts"
+        )
 
     async def run_async(self, max_ticks: Optional[int] = None):
         self._running = True

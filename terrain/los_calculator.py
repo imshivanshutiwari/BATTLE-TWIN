@@ -1,7 +1,9 @@
 """Line-of-sight computation from DEM data."""
+
 import numpy as np
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 from utils.logger import get_logger
+
 log = get_logger("LOS")
 
 
@@ -30,9 +32,14 @@ class LOSCalculator:
                 c0 += sc
         return cells
 
-    def compute_los(self, dem: np.ndarray, observer: Tuple[int, int],
-                    target: Tuple[int, int], obs_height: float = 2.0,
-                    tgt_height: float = 2.0) -> bool:
+    def compute_los(
+        self,
+        dem: np.ndarray,
+        observer: Tuple[int, int],
+        target: Tuple[int, int],
+        obs_height: float = 2.0,
+        tgt_height: float = 2.0,
+    ) -> bool:
         cells = self._bresenham(observer[0], observer[1], target[0], target[1])
         if len(cells) < 2:
             return True
@@ -46,8 +53,13 @@ class LOSCalculator:
                 return False
         return True
 
-    def compute_viewshed(self, dem: np.ndarray, observer_pos: Tuple[int, int],
-                         max_range_m: float = 5000, obs_height: float = 2.0) -> np.ndarray:
+    def compute_viewshed(
+        self,
+        dem: np.ndarray,
+        observer_pos: Tuple[int, int],
+        max_range_m: float = 5000,
+        obs_height: float = 2.0,
+    ) -> np.ndarray:
         rows, cols = dem.shape
         max_cells = int(max_range_m / self.cell_size_m)
         viewshed = np.zeros((rows, cols), dtype=bool)
@@ -77,10 +89,12 @@ class LOSCalculator:
             matrix[i, i] = True
         return matrix
 
-    def find_defilade(self, dem: np.ndarray, observer: Tuple[int, int],
-                      search_radius: int = 50) -> List[Tuple[int, int]]:
-        viewshed = self.compute_viewshed(dem, observer,
-                                         max_range_m=search_radius * self.cell_size_m)
+    def find_defilade(
+        self, dem: np.ndarray, observer: Tuple[int, int], search_radius: int = 50
+    ) -> List[Tuple[int, int]]:
+        viewshed = self.compute_viewshed(
+            dem, observer, max_range_m=search_radius * self.cell_size_m
+        )
         rows, cols = dem.shape
         defilade = []
         or_, oc = observer
