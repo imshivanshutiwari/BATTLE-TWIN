@@ -1,0 +1,20 @@
+{
+    "FileVersion": 3,
+    "Version": 1,
+    "VersionName": "1.0",
+    "FriendlyName": "BattleTwin",
+    "Description": "BATTLE-TWIN Digital Twin Plugin — NATS JetStream real-time battlefield state sync",
+    "Category": "Simulation",
+    "CreatedBy": "BATTLE-TWIN Team",
+    "CanContainContent": true,
+    "IsBetaVersion": false,
+    "IsExperimentalVersion": false,
+    "Installed": false,
+    "Modules": [
+        {
+            "Name": "BattleTwin",
+            "Type": "Runtime",
+            "LoadingPhase": "Default"
+        }
+    ]
+}

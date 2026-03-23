@@ -1,0 +1,256 @@
+# BATTLE-TWIN Battlefield Configuration
+# OPERATION BLUE EAGLE — Area of Operations
+
+ao_name: "OPERATION BLUE EAGLE"
+ao_bbox: [34.0, -117.5, 34.5, -117.0]  # [min_lat, min_lon, max_lat, max_lon] — 50x50km AO
+coord_system: "MGRS"
+datum: "WGS84"
+update_rate_hz: 10
+max_range_km: 50
+
+# Friendly Force Structure (BCT-level)
+friendly_units:
+  - uid: "BLUE-01"
+    callsign: "WARHORSE-6"
+    unit_type: "infantry"
+    designation: "1st Platoon, A Company"
+    initial_lat: 34.05
+    initial_lon: -117.45
+    strength_pct: 100
+    ammo_pct: 95
+    fuel_pct: 90
+    water_pct: 85
+
+  - uid: "BLUE-02"
+    callsign: "WARHORSE-5"
+    unit_type: "infantry"
+    designation: "2nd Platoon, A Company"
+    initial_lat: 34.07
+    initial_lon: -117.42
+    strength_pct: 98
+    ammo_pct: 92
+    fuel_pct: 88
+    water_pct: 80
+
+  - uid: "BLUE-03"
+    callsign: "DAGGER-6"
+    unit_type: "armor"
+    designation: "1st Platoon, B Company (Armor)"
+    initial_lat: 34.10
+    initial_lon: -117.38
+    strength_pct: 100
+    ammo_pct: 88
+    fuel_pct: 75
+    water_pct: 90
+
+  - uid: "BLUE-04"
+    callsign: "DAGGER-5"
+    unit_type: "armor"
+    designation: "2nd Platoon, B Company (Armor)"
+    initial_lat: 34.12
+    initial_lon: -117.35
+    strength_pct: 95
+    ammo_pct: 85
+    fuel_pct: 70
+    water_pct: 88
+
+  - uid: "BLUE-05"
+    callsign: "STEEL RAIN-6"
+    unit_type: "artillery"
+    designation: "Battery A, Field Artillery"
+    initial_lat: 34.02
+    initial_lon: -117.48
+    strength_pct: 100
+    ammo_pct: 80
+    fuel_pct: 85
+    water_pct: 92
+
+  - uid: "BLUE-06"
+    callsign: "STEEL RAIN-5"
+    unit_type: "artillery"
+    designation: "Battery B, Field Artillery"
+    initial_lat: 34.03
+    initial_lon: -117.46
+    strength_pct: 100
+    ammo_pct: 78
+    fuel_pct: 82
+    water_pct: 90
+
+  - uid: "BLUE-07"
+    callsign: "DUSTOFF-1"
+    unit_type: "aviation"
+    designation: "MEDEVAC Flight, Aviation Company"
+    initial_lat: 34.01
+    initial_lon: -117.50
+    strength_pct: 100
+    ammo_pct: 0
+    fuel_pct: 95
+    water_pct: 100
+
+  - uid: "BLUE-08"
+    callsign: "GUNFIGHTER-6"
+    unit_type: "aviation"
+    designation: "Attack Helicopter Flight"
+    initial_lat: 34.01
+    initial_lon: -117.49
+    strength_pct: 100
+    ammo_pct: 100
+    fuel_pct: 92
+    water_pct: 100
+
+  - uid: "BLUE-09"
+    callsign: "LONGKNIFE-6"
+    unit_type: "infantry"
+    designation: "Scout Platoon, HHC"
+    initial_lat: 34.20
+    initial_lon: -117.25
+    strength_pct: 100
+    ammo_pct: 90
+    fuel_pct: 80
+    water_pct: 85
+
+  - uid: "BLUE-10"
+    callsign: "BLACKJACK-6"
+    unit_type: "infantry"
+    designation: "3rd Platoon, C Company"
+    initial_lat: 34.15
+    initial_lon: -117.30
+    strength_pct: 92
+    ammo_pct: 88
+    fuel_pct: 82
+    water_pct: 78
+
+  - uid: "BLUE-11"
+    callsign: "WRENCH-6"
+    unit_type: "logistics"
+    designation: "Forward Support Company"
+    initial_lat: 34.00
+    initial_lon: -117.50
+    strength_pct: 100
+    ammo_pct: 0
+    fuel_pct: 100
+    water_pct: 100
+
+  - uid: "BLUE-12"
+    callsign: "SABER-6"
+    unit_type: "infantry"
+    designation: "Weapons Platoon, D Company"
+    initial_lat: 34.08
+    initial_lon: -117.40
+    strength_pct: 96
+    ammo_pct: 94
+    fuel_pct: 86
+    water_pct: 82
+
+# Hostile Contacts (initial intelligence picture)
+hostile_contacts_initial:
+  - uid: "RED-01"
+    callsign: "HOSTILE-1"
+    unit_type: "infantry"
+    last_known_lat: 34.30
+    last_known_lon: -117.15
+    confidence: 0.85
+    source: "SIGINT"
+    strength_estimate: "platoon"
+
+  - uid: "RED-02"
+    callsign: "HOSTILE-2"
+    unit_type: "armor"
+    last_known_lat: 34.35
+    last_known_lon: -117.10
+    confidence: 0.72
+    source: "IMINT"
+    strength_estimate: "section"
+
+  - uid: "RED-03"
+    callsign: "HOSTILE-3"
+    unit_type: "artillery"
+    last_known_lat: 34.40
+    last_known_lon: -117.05
+    confidence: 0.60
+    source: "HUMINT"
+    strength_estimate: "battery"
+
+  - uid: "RED-04"
+    callsign: "HOSTILE-4"
+    unit_type: "infantry"
+    last_known_lat: 34.25
+    last_known_lon: -117.20
+    confidence: 0.90
+    source: "SIGINT"
+    strength_estimate: "squad"
+
+  - uid: "RED-05"
+    callsign: "HOSTILE-5"
+    unit_type: "unknown"
+    last_known_lat: 34.28
+    last_known_lon: -117.18
+    confidence: 0.45
+    source: "HUMINT"
+    strength_estimate: "unknown"
+
+# Phase Lines (control measures)
+phase_lines:
+  - name: "PL_ALPHA"
+    type: "line_of_departure"
+    coordinates:
+      - [34.05, -117.50]
+      - [34.05, -117.00]
+    color: "#00ff00"
+
+  - name: "PL_BRAVO"
+    type: "phase_line"
+    coordinates:
+      - [34.20, -117.50]
+      - [34.20, -117.00]
+    color: "#ffff00"
+
+  - name: "PL_CHARLIE"
+    type: "limit_of_advance"
+    coordinates:
+      - [34.40, -117.50]
+      - [34.40, -117.00]
+    color: "#ff0000"
+
+# Objectives
+objectives:
+  - name: "OBJ_HAWK"
+    type: "seize"
+    center_lat: 34.15
+    center_lon: -117.25
+    radius_m: 500
+
+  - name: "OBJ_EAGLE"
+    type: "seize"
+    center_lat: 34.25
+    center_lon: -117.15
+    radius_m: 750
+
+  - name: "OBJ_FALCON"
+    type: "seize"
+    center_lat: 34.35
+    center_lon: -117.08
+    radius_m: 1000
+
+# Terrain classification thresholds
+terrain:
+  slope_go_max_deg: 15
+  slope_slow_go_max_deg: 30
+  slope_no_go_min_deg: 30
+  forest_speed_factor: 0.5
+  urban_speed_factor: 0.3
+  road_speed_factor: 1.5
+
+# Medical evacuation
+medevac:
+  hospitals:
+    - name: "CSH-1"
+      lat: 33.95
+      lon: -117.55
+      type: "combat_support_hospital"
+    - name: "FST-1"
+      lat: 34.02
+      lon: -117.48
+      type: "forward_surgical_team"
+  max_evacuation_time_min: 60
+  priority_levels: ["URGENT", "PRIORITY", "ROUTINE"]

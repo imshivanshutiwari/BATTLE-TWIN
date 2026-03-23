@@ -1,0 +1,71 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+ENV/
+env/
+
+# Environment variables
+.env
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Data caches
+data/cache/
+*.geojson
+*.tif
+*.tiff
+
+# Logs
+logs/
+*.log
+
+# Checkpoints
+checkpoints/
+*.pt
+*.pth
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# W&B
+wandb/
+
+# Assets generated
+assets/results/*.png
+assets/results/*.json
+
+# NATS data
+nats-data/

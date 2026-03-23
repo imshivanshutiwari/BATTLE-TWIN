@@ -1,0 +1,64 @@
+# BATTLE-TWIN UE5 Plugin Configuration
+# Unreal Engine 5 Digital Twin Connection
+
+connection:
+  nats_servers:
+    - "nats://localhost:4222"
+  subscribe_subjects:
+    - "battlefield.state"
+    - "battlefield.unit.>"
+    - "battlefield.contact"
+    - "battlefield.fires"
+    - "battlefield.medevac"
+  reconnect_interval_s: 5
+  heartbeat_interval_s: 10
+
+rendering:
+  update_rate_fps: 60
+  interpolation_enabled: true
+  interpolation_speed: 10.0  # lerp speed
+  max_units_rendered: 200
+  lod_distances_m: [100, 500, 2000, 5000]
+
+  # NATO APP-6D symbol rendering
+  symbols:
+    friendly_color: [0.0, 1.0, 0.0, 1.0]  # RGBA green
+    hostile_color: [1.0, 0.0, 0.0, 1.0]    # RGBA red
+    unknown_color: [1.0, 1.0, 0.0, 1.0]    # RGBA yellow
+    neutral_color: [0.0, 0.8, 0.0, 1.0]    # RGBA dark green
+    symbol_scale: 50.0
+    label_font_size: 18
+
+terrain:
+  tile_size_m: 1000
+  max_tiles_loaded: 100
+  elevation_scale: 1.0
+  texture_resolution: 2048
+  enable_foliage: true
+  enable_water: true
+
+  # Overlay layers
+  overlays:
+    threat_heatmap:
+      enabled: true
+      opacity: 0.5
+      color_ramp: ["#00ff00", "#ffff00", "#ff4400"]
+    los_lines:
+      enabled: true
+      color: [0.0, 1.0, 0.0, 0.4]
+      width: 2.0
+    phase_lines:
+      enabled: true
+      width: 4.0
+
+camera:
+  default_height_m: 5000
+  min_height_m: 50
+  max_height_m: 50000
+  orbit_speed: 45.0  # degrees per second
+  zoom_speed: 500.0
+
+network:
+  buffer_size_bytes: 65536
+  max_pending_messages: 1000
+  json_parse_threads: 2

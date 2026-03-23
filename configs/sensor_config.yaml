@@ -1,0 +1,64 @@
+# BATTLE-TWIN Sensor Configuration
+# IoT sensor fusion parameters
+
+imu:
+  sample_rate_hz: 100
+  madgwick_beta: 0.1
+  accelerometer:
+    range_g: 16
+    noise_density: 0.0003  # g/sqrt(Hz)
+    bias_stability: 0.04   # mg
+  gyroscope:
+    range_dps: 2000
+    noise_density: 0.01    # dps/sqrt(Hz)
+    bias_stability: 10.0   # dph
+  magnetometer:
+    range_gauss: 16
+    noise_density: 0.0015  # gauss/sqrt(Hz)
+
+gps:
+  update_rate_hz: 1
+  kalman:
+    process_noise: 0.01
+    measurement_noise: 0.5
+    initial_uncertainty: 10.0
+  cep_threshold_m: 5.0  # Circular Error Probable
+  spoofing_detection:
+    velocity_max_mps: 100
+    altitude_max_m: 15000
+    consistency_window_s: 10
+
+thermal:
+  fps: 30
+  resolution: [640, 480]
+  temperature_range_c: [-20, 600]
+  nuc_interval_s: 120
+  detection:
+    human_signature_c: [25, 40]
+    vehicle_signature_c: [40, 120]
+    min_blob_pixels: 20
+    confidence_threshold: 0.7
+
+acoustic:
+  sample_rate: 44100
+  buffer_size: 4096
+  channels: 4  # microphone array
+  detection:
+    gunshot_freq_range_hz: [500, 8000]
+    explosion_freq_range_hz: [20, 500]
+    vehicle_freq_range_hz: [30, 2000]
+    snr_threshold_db: 10
+    energy_threshold: 0.01
+  tdoa:
+    speed_of_sound_mps: 343.0
+    array_spacing_m: 0.5
+    max_range_m: 5000
+
+fusion:
+  weights:
+    imu: 0.20
+    gps: 0.40
+    thermal: 0.25
+    acoustic: 0.15
+  agreement_threshold: 0.8
+  stale_data_timeout_s: 5

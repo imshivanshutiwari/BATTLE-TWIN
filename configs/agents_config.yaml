@@ -1,0 +1,93 @@
+# BATTLE-TWIN LangGraph Agent Configuration
+# Multi-agent C2 decision support system
+
+llm:
+  model: "gpt-4o"
+  temperature: 0.1
+  max_tokens: 2000
+  api_key: "${OPENAI_API_KEY:-}"
+  timeout_s: 30
+  max_retries: 3
+
+# Agent-specific parameters
+agents:
+  commander:
+    role: "Brigade Commander Decision Support"
+    system_prompt: >
+      You are an AI assistant supporting a brigade combat team commander.
+      Synthesize intelligence, fires, logistics, and MEDEVAC inputs into
+      actionable decisions. Use NATO standard formats. Be concise and
+      decisive. Prioritize force protection and mission accomplishment.
+    tools: ["approve_coa", "request_fires", "order_medevac",
+            "issue_fragmentary_order", "request_air_support"]
+
+  intel:
+    role: "Intelligence Fusion Officer"
+    system_prompt: >
+      You are an intelligence analyst fusing SIGINT, HUMINT, IMINT, and
+      sensor data into a coherent intelligence picture. Assess enemy
+      disposition, strength, and most probable course of action.
+    update_interval_s: 10
+
+  fires:
+    role: "Fire Support Coordinator"
+    system_prompt: >
+      You are a fire support coordinator managing artillery, CAS, and
+      naval fires. Validate fire missions against coordination measures.
+      Ensure compliance with ROE and fire support coordination lines.
+    max_concurrent_missions: 5
+
+  logistics:
+    role: "Sustainment Officer"
+    system_prompt: >
+      You are a logistics officer managing supply classes I-V and VIII.
+      Optimize convoy routes using VRP solver. Monitor supply levels
+      and trigger resupply missions when below critical thresholds.
+    critical_thresholds:
+      ammo_pct: 30
+      fuel_pct: 25
+      water_pct: 20
+
+  medevac:
+    role: "MEDEVAC Coordinator"
+    system_prompt: >
+      You are a MEDEVAC coordinator processing 9-line MEDEVAC requests.
+      Prioritize evacuations by precedence: URGENT > PRIORITY > ROUTINE.
+      Coordinate with aviation assets and medical facilities.
+    max_concurrent_evacuations: 3
+
+# Monte Carlo Tree Search (COA generation)
+mcts:
+  simulations: 1000
+  num_coas: 5
+  exploration_constant: 1.414  # sqrt(2)
+  max_depth: 10
+  rollout_policy: "random"
+  reward_weights:
+    terrain_advantage: 0.25
+    force_ratio: 0.30
+    logistics_sustainability: 0.20
+    time_factor: 0.15
+    risk: 0.10
+
+# Threat assessment
+threat:
+  update_interval_s: 5
+  prior_threat_level: 0.3
+  decay_rate: 0.01  # threat decays if no new evidence
+
+# VRP logistics
+vrp:
+  max_vehicles: 8
+  max_route_distance_km: 100
+  vehicle_capacity_kg: 5000
+  depot_lat: 34.00
+  depot_lon: -117.50
+
+# OLSR MANET routing
+olsr:
+  hello_interval_s: 2
+  tc_interval_s: 5
+  mid_interval_s: 5
+  neighbor_hold_time_s: 6
+  topology_hold_time_s: 15

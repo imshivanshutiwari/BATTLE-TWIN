@@ -1,0 +1,51 @@
+# BATTLE-TWIN NATS JetStream Configuration
+# Real-time state synchronization between Python backend and UE5
+
+servers:
+  - "nats://localhost:4222"
+
+# Subjects hierarchy
+subjects:
+  state: "battlefield.state"
+  units: "battlefield.unit.>"
+  contacts: "battlefield.contact"
+  alerts: "battlefield.alert"
+  medevac: "battlefield.medevac"
+  fires: "battlefield.fires"
+  sensors: "battlefield.sensors"
+  comms: "battlefield.comms"
+  agents: "battlefield.agents"
+
+# JetStream settings
+jetstream: true
+stream_name: "BATTLEFIELD"
+retention: "limits"
+max_msgs: 10000
+max_bytes: 104857600  # 100 MB
+max_age_s: 86400      # 24 hours
+
+# Publishing
+publish_interval_ms: 100   # 10 Hz update rate
+batch_size: 50
+compression: false
+
+# Connection
+connect_timeout_s: 5
+reconnect_wait_s: 2
+max_reconnect_attempts: 60
+ping_interval_s: 20
+max_outstanding_pings: 2
+
+# TLS (disabled for local dev)
+tls:
+  enabled: false
+  cert_file: ""
+  key_file: ""
+  ca_file: ""
+
+# Auth
+auth:
+  enabled: false
+  token: "${NATS_TOKEN:-}"
+  user: "${NATS_USER:-}"
+  password: "${NATS_PASSWORD:-}"
