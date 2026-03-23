@@ -5,7 +5,7 @@ import webbrowser
 import dash
 import dash_bootstrap_components as dbc
 from dashboard.layout import create_layout
-from dashboard.main_callbacks import register_callbacks, set_shared_state
+from dashboard.callbacks import register_callbacks, set_shared_state
 from digital_twin.twin_state import BattlefieldState
 from utils.logger import get_logger
 from utils.config_loader import load_config

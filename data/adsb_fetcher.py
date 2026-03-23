@@ -41,21 +41,21 @@ class Aircraft:
     """Single aircraft state from ADS-B data."""
     icao24: str
     callsign: str
-    origin_country: str
-    time_position: float
-    last_contact: float
-    longitude: float
     latitude: float
-    baro_altitude: Optional[float]
-    on_ground: bool
-    velocity: Optional[float]
-    true_track: Optional[float]
-    vertical_rate: Optional[float]
-    sensors: Optional[List[int]]
-    geo_altitude: Optional[float]
-    squawk: Optional[str]
-    spi: bool
-    position_source: int
+    longitude: float
+    origin_country: str = ""
+    time_position: float = 0.0
+    last_contact: float = 0.0
+    baro_altitude: Optional[float] = None
+    on_ground: bool = False
+    velocity: Optional[float] = None
+    true_track: Optional[float] = None
+    vertical_rate: Optional[float] = None
+    sensors: Optional[List[int]] = None
+    geo_altitude: Optional[float] = None
+    squawk: Optional[str] = None
+    spi: bool = False
+    position_source: int = 0
 
     @property
     def altitude_m(self) -> float:
@@ -76,7 +76,6 @@ class Aircraft:
         """Ground speed in m/s."""
         return self.velocity if self.velocity is not None else 0.0
 
-    @property
     def is_military_callsign(self) -> bool:
         """Check if callsign matches known military patterns."""
         cs = self.callsign.strip().upper()
@@ -96,7 +95,7 @@ class Aircraft:
             "vertical_rate": self.vertical_rate,
             "on_ground": self.on_ground,
             "squawk": self.squawk,
-            "is_military": self.is_military_callsign,
+            "is_military": self.is_military_callsign(),
             "timestamp": datetime.fromtimestamp(
                 self.time_position or self.last_contact, tz=timezone.utc
             ).isoformat(),
@@ -217,7 +216,7 @@ class ADSBFetcher:
             List of Aircraft matching military callsign patterns.
         """
         all_aircraft = self.fetch_live_aircraft(bbox)
-        military = [ac for ac in all_aircraft if ac.is_military_callsign]
+        military = [ac for ac in all_aircraft if ac.is_military_callsign()]
         log.info(
             f"Filtered {len(military)} military callsigns "
             f"from {len(all_aircraft)} total"

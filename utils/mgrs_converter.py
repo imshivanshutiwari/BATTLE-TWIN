@@ -195,16 +195,21 @@ class MGRSConverter:
             precision=precision,
         )
 
-    def mgrs_to_latlon(self, mgrs_string: str) -> Tuple[float, float]:
+    def mgrs_to_latlon(self, mgrs_input) -> Tuple[float, float]:
         """
-        Convert MGRS string to WGS84 lat/lon.
+        Convert MGRS string or MGRSCoord to WGS84 lat/lon.
 
         Args:
-            mgrs_string: MGRS coordinate string (e.g., '11SPA1234567890').
+            mgrs_input: MGRS coordinate string (e.g., '11SPA1234567890')
+                        or an MGRSCoord object.
 
         Returns:
             (latitude, longitude) in decimal degrees.
         """
+        if isinstance(mgrs_input, MGRSCoord):
+            mgrs_string = str(mgrs_input)
+        else:
+            mgrs_string = mgrs_input
         parsed = self.parse_mgrs(mgrs_string)
         zone_number = parsed.zone_number
         zone_letter = parsed.zone_letter
@@ -282,21 +287,26 @@ class MGRSConverter:
 
     def distance_m(
         self,
-        coord1: MGRSCoord,
-        coord2: MGRSCoord,
+        lat1_or_coord1,
+        lon1_or_coord2,
+        lat2: Optional[float] = None,
+        lon2: Optional[float] = None,
     ) -> float:
         """
-        Compute distance in meters between two MGRS coordinates.
+        Compute distance in meters between two points.
 
-        Uses Haversine formula on converted lat/lon.
-
-        Args:
-            coord1: First MGRS coordinate.
-            coord2: Second MGRS coordinate.
+        Can be called as:
+          distance_m(lat1, lon1, lat2, lon2)   — four floats
+          distance_m(coord1, coord2)            — two MGRSCoord objects
 
         Returns:
             Distance in meters.
         """
+        if lat2 is not None and lon2 is not None:
+            # Called with four lat/lon floats
+            return self.haversine(lat1_or_coord1, lon1_or_coord2, lat2, lon2)
+        # Called with two MGRSCoord objects
+        coord1, coord2 = lat1_or_coord1, lon1_or_coord2
         lat1, lon1 = self.mgrs_to_latlon(str(coord1))
         lat2, lon2 = self.mgrs_to_latlon(str(coord2))
         return self.haversine(lat1, lon1, lat2, lon2)
@@ -326,6 +336,12 @@ class MGRSConverter:
     ) -> str:
         """Convenience: lat/lon to MGRS string."""
         return str(self.latlon_to_mgrs(lat, lon, precision))
+
+    def bearing_deg(
+        self, lat1: float, lon1: float, lat2: float, lon2: float
+    ) -> float:
+        """Alias for bearing(). Returns bearing in degrees (0-360)."""
+        return self.bearing(lat1, lon1, lat2, lon2)
 
     def bearing(
         self, lat1: float, lon1: float, lat2: float, lon2: float

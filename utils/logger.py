@@ -146,9 +146,9 @@ def get_logger(
     if component in _loggers:
         return _loggers[component]
 
-    logger = logging.getLogger(f"battletwin.{component}")
+    logger = logging.getLogger(f"BT.{component}")
     logger.setLevel(getattr(logging, log_level.upper(), logging.DEBUG))
-    logger.propagate = False
+    logger.propagate = True
 
     # Console handler with tactical formatting
     if not logger.handlers:

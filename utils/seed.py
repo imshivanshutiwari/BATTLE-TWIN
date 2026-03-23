@@ -69,6 +69,11 @@ def deterministic_hash(value: str, modulus: int = 2**31) -> int:
     return int(digest, 16) % modulus
 
 
+def create_seeded_rng(seed: int) -> np.random.Generator:
+    """Alias for seeded_rng for backwards compatibility."""
+    return seeded_rng(seed)
+
+
 def seeded_rng(seed: int) -> np.random.Generator:
     """
     Create an independent NumPy random generator with a specific seed.

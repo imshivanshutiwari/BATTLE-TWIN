@@ -34,7 +34,7 @@ class AcousticEvent:
 
 class AcousticDetector:
     def __init__(self, sample_rate=44100, buffer_size=4096, n_channels=4,
-                 array_spacing_m=0.5, snr_threshold_db=10.0, energy_threshold=0.01,
+                 array_spacing_m=0.5, snr_threshold_db=10.0, energy_threshold=0.001,
                  speed_of_sound_mps=343.0):
         self.sample_rate = sample_rate
         self.buffer_size = buffer_size

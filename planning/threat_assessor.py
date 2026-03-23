@@ -8,12 +8,18 @@ from utils.logger import get_logger
 log = get_logger("THREAT")
 
 try:
-    from pgmpy.models import BayesianNetwork
+    from pgmpy.models import DiscreteBayesianNetwork
     from pgmpy.factors.discrete import TabularCPD
     from pgmpy.inference import VariableElimination
     PGMPY_AVAILABLE = True
 except ImportError:
-    PGMPY_AVAILABLE = False
+    try:
+        from pgmpy.models import BayesianNetwork as DiscreteBayesianNetwork
+        from pgmpy.factors.discrete import TabularCPD
+        from pgmpy.inference import VariableElimination
+        PGMPY_AVAILABLE = True
+    except ImportError:
+        PGMPY_AVAILABLE = False
 
 
 class BayesianThreatAssessor:
@@ -30,7 +36,7 @@ class BayesianThreatAssessor:
         if not PGMPY_AVAILABLE:
             log.warning("pgmpy not available, using simplified threat model")
             return
-        model = BayesianNetwork([
+        model = DiscreteBayesianNetwork([
             ("EnemyIntention", "ThreatLevel"),
             ("EnemyCapability", "ThreatLevel"),
             ("TerrainAdvantage", "ThreatLevel"),

@@ -136,8 +136,9 @@ class DStarLitePlanner:
         path = Path()
         current = self._start
         visited = set()
+        # Try to follow g-values from start to goal
         while current != self._goal:
-            if current in visited:
+            if current in visited or len(path.cells) > self._terrain_grid.size:
                 break
             visited.add(current)
             path.cells.append(current)
@@ -146,17 +147,58 @@ class DStarLitePlanner:
             for nbr in self._neighbors(current):
                 g_nbr = self._g.get(nbr, float('inf'))
                 c = self._cost(current, nbr)
-                total = g_nbr + c
-                if total < best_cost:
-                    best_cost = total
-                    best_next = nbr
-            if best_next is None or best_cost == float('inf'):
+                if g_nbr < float('inf') and c < float('inf'):
+                    total = g_nbr + c
+                    if total < best_cost:
+                        best_cost = total
+                        best_next = nbr
+            if best_next is None:
                 break
+            path.total_cost += self._cost(path.cells[-1], best_next)
             current = best_next
-            path.total_cost += self._cost(path.cells[-1], current) if path.cells else 0
-        path.cells.append(self._goal)
+        if current == self._goal:
+            path.cells.append(self._goal)
+        else:
+            # Fallback: A* search when D* Lite g-values incomplete
+            path = self._astar_fallback()
         path.distance_m = len(path.cells) * self.cell_size_m
         return path
+
+    def _astar_fallback(self) -> Path:
+        """Simple A* search as fallback when D* Lite extraction fails."""
+        import heapq as _hq
+        start, goal = self._start, self._goal
+        open_set = []
+        _hq.heappush(open_set, (self._heuristic(start, goal), start))
+        came_from = {}
+        g_score = {start: 0.0}
+        visited = set()
+        while open_set:
+            _, current = _hq.heappop(open_set)
+            if current in visited:
+                continue
+            visited.add(current)
+            if current == goal:
+                cells = []
+                while current in came_from:
+                    cells.append(current)
+                    current = came_from[current]
+                cells.append(start)
+                cells.reverse()
+                p = Path(cells=cells, total_cost=g_score.get(goal, 0.0))
+                return p
+            for nbr in self._neighbors(current):
+                c = self._cost(current, nbr)
+                if c == float('inf'):
+                    continue
+                tentative = g_score.get(current, float('inf')) + c
+                if tentative < g_score.get(nbr, float('inf')):
+                    came_from[nbr] = current
+                    g_score[nbr] = tentative
+                    f = tentative + self._heuristic(nbr, goal)
+                    _hq.heappush(open_set, (f, nbr))
+        # No path found — return start → goal directly
+        return Path(cells=[start, goal])
 
     def plan(self, start: Tuple[int, int], goal: Tuple[int, int],
              terrain_grid: np.ndarray) -> Path:
