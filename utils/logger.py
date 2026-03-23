@@ -9,12 +9,11 @@ Provides military-style structured logging with:
 - JSON structured fields for machine parsing
 """
 
-import os
 import sys
 import json
 import logging
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 from pathlib import Path
 
 
@@ -39,11 +38,11 @@ class TacticalFormatter(logging.Formatter):
     """
 
     LEVEL_COLORS = {
-        "DEBUG": "\033[36m",      # Cyan - ROUTINE
-        "INFO": "\033[32m",       # Green - PRIORITY
-        "WARNING": "\033[33m",    # Yellow - IMMEDIATE
-        "ERROR": "\033[31m",      # Red - FLASH
-        "CRITICAL": "\033[35m",   # Magenta - OVERRIDE
+        "DEBUG": "\033[36m",  # Cyan - ROUTINE
+        "INFO": "\033[32m",  # Green - PRIORITY
+        "WARNING": "\033[33m",  # Yellow - IMMEDIATE
+        "ERROR": "\033[31m",  # Red - FLASH
+        "CRITICAL": "\033[35m",  # Magenta - OVERRIDE
     }
     RESET = "\033[0m"
 
@@ -77,9 +76,7 @@ class JSONFormatter(logging.Formatter):
 
     def format(self, record: logging.LogRecord) -> str:
         log_entry = {
-            "timestamp": datetime.fromtimestamp(
-                record.created, tz=timezone.utc
-            ).isoformat(),
+            "timestamp": datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(),
             "level": record.levelname,
             "component": getattr(record, "component", record.name),
             "message": record.getMessage(),
@@ -95,9 +92,7 @@ class TacticalLogAdapter(logging.LoggerAdapter):
     Logger adapter that injects component name and structured fields.
     """
 
-    def process(
-        self, msg: str, kwargs: Dict[str, Any]
-    ) -> tuple:
+    def process(self, msg: str, kwargs: Dict[str, Any]) -> tuple:
         extra = kwargs.setdefault("extra", {})
         extra["component"] = self.extra.get("component", "SYSTEM")
         if "fields" in kwargs:
@@ -146,9 +141,9 @@ def get_logger(
     if component in _loggers:
         return _loggers[component]
 
-    logger = logging.getLogger(f"battletwin.{component}")
+    logger = logging.getLogger(f"BT.{component}")
     logger.setLevel(getattr(logging, log_level.upper(), logging.DEBUG))
-    logger.propagate = False
+    logger.propagate = True
 
     # Console handler with tactical formatting
     if not logger.handlers:

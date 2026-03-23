@@ -11,7 +11,7 @@ at a configurable rate (default 10 Hz) for consumption by:
 import asyncio
 import json
 import time
-from typing import Any, AsyncGenerator, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from utils.logger import get_logger
 
@@ -20,7 +20,8 @@ log = get_logger("NATS_PUBLISHER")
 # Attempt NATS import
 try:
     import nats
-    from nats.js.api import StreamConfig, RetentionPolicy
+    from nats.js.api import RetentionPolicy
+
     NATS_AVAILABLE = True
 except ImportError:
     NATS_AVAILABLE = False
@@ -193,7 +194,7 @@ class NATSPublisher:
         """Internal publish with logging."""
         if self._connected and self._js:
             try:
-                ack = await self._js.publish(subject, payload)
+                await self._js.publish(subject, payload)
                 self._publish_count += 1
                 self._last_publish_time = time.time()
             except Exception as e:

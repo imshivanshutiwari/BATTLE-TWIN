@@ -20,6 +20,7 @@ log = get_logger("GPS_KALMAN")
 @dataclass
 class GPSMeasurement:
     """Raw GPS measurement."""
+
     latitude: float
     longitude: float
     altitude: float
@@ -32,6 +33,7 @@ class GPSMeasurement:
 @dataclass
 class UnitPosition:
     """Fused position estimate."""
+
     latitude: float
     longitude: float
     altitude: float
@@ -72,7 +74,7 @@ class GPSKalmanTracker:
         initial_uncertainty: float = 10.0,
     ):
         self.state_dim = 6  # [lat, lon, alt, vel_n, vel_e, vel_d]
-        self.meas_dim = 3   # [lat, lon, alt]
+        self.meas_dim = 3  # [lat, lon, alt]
 
         # State vector
         self.x = np.zeros(self.state_dim)
@@ -119,11 +121,13 @@ class GPSKalmanTracker:
         # Convert velocity to lat/lon changes
         # Approximate: 1 degree lat ≈ 111320 m
         m_per_deg_lat = 111320.0
-        m_per_deg_lon = 111320.0 * math.cos(math.radians(self.x[0])) if abs(self.x[0]) < 90 else 111320.0
+        m_per_deg_lon = (
+            111320.0 * math.cos(math.radians(self.x[0])) if abs(self.x[0]) < 90 else 111320.0
+        )
 
         F[0, 3] = dt / m_per_deg_lat  # lat += vel_n * dt / meters_per_deg
         F[1, 4] = dt / m_per_deg_lon  # lon += vel_e * dt / meters_per_deg
-        F[2, 5] = dt                  # alt += vel_d * dt
+        F[2, 5] = dt  # alt += vel_d * dt
 
         # Predict state
         self.x = F @ self.x
@@ -163,7 +167,7 @@ class GPSKalmanTracker:
         z = np.array([gps.latitude, gps.longitude, gps.altitude])
 
         # Adjust measurement noise by HDOP
-        R_adj = self.R * (gps.hdop ** 2)
+        R_adj = self.R * (gps.hdop**2)
 
         # Innovation
         y = z - self.H @ self.x
@@ -202,7 +206,7 @@ class GPSKalmanTracker:
         pos_cov = self.P[:2, :2]
         # Convert from degrees to meters
         m_per_deg = 111320.0
-        pos_cov_m = pos_cov * (m_per_deg ** 2)
+        pos_cov_m = pos_cov * (m_per_deg**2)
 
         eigenvalues = np.linalg.eigvalsh(pos_cov_m)
         eigenvalues = np.maximum(eigenvalues, 0)
@@ -244,8 +248,8 @@ class GPSKalmanTracker:
             # Check velocity plausibility
             dt = max(curr.timestamp - prev.timestamp, 0.001) if curr.timestamp > 0 else 1.0
             dlat = (curr.latitude - prev.latitude) * 111320
-            dlon = (curr.longitude - prev.longitude) * 111320 * math.cos(
-                math.radians(curr.latitude)
+            dlon = (
+                (curr.longitude - prev.longitude) * 111320 * math.cos(math.radians(curr.latitude))
             )
             dist = math.sqrt(dlat**2 + dlon**2)
             speed = dist / dt
@@ -259,9 +263,7 @@ class GPSKalmanTracker:
 
             # Check altitude plausibility
             if abs(curr.altitude) > self._spoofing_threshold_alt:
-                log.warning(
-                    f"GPS spoofing suspected: altitude={curr.altitude:.0f}m"
-                )
+                log.warning(f"GPS spoofing suspected: altitude={curr.altitude:.0f}m")
                 return True
 
         return False

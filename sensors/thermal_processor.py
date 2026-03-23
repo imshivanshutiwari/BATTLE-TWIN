@@ -20,6 +20,7 @@ log = get_logger("THERMAL")
 @dataclass
 class ThermalDetection:
     """A detected heat signature."""
+
     detection_id: str
     center_x: int
     center_y: int
@@ -73,9 +74,7 @@ class ThermalProcessor:
         self._frame_count = 0
         self._tracked_objects: Dict[str, List[ThermalDetection]] = {}
 
-    def process_frame(
-        self, thermal_frame: np.ndarray
-    ) -> List[ThermalDetection]:
+    def process_frame(self, thermal_frame: np.ndarray) -> List[ThermalDetection]:
         """
         Process a single thermal frame.
 
@@ -94,10 +93,7 @@ class ThermalProcessor:
 
         # Update background (running average)
         alpha = 0.05
-        self._background = (
-            alpha * thermal_frame.astype(np.float32)
-            + (1 - alpha) * self._background
-        )
+        self._background = alpha * thermal_frame.astype(np.float32) + (1 - alpha) * self._background
 
         # Foreground: significant temperature difference from background
         diff = np.abs(thermal_frame.astype(np.float32) - self._background)
@@ -127,9 +123,7 @@ class ThermalProcessor:
         detections.extend(self._detect_blobs(thermal_frame, fire_mask, "FIRE"))
 
         # Filter by confidence
-        detections = [
-            d for d in detections if d.confidence >= self.confidence_threshold
-        ]
+        detections = [d for d in detections if d.confidence >= self.confidence_threshold]
 
         # Update tracking
         for d in detections:
@@ -170,15 +164,17 @@ class ThermalProcessor:
                         ):
                             visited[cr, cc] = True
                             blob_pixels.append((cr, cc))
-                            stack.extend([
-                                (cr - 1, cc), (cr + 1, cc),
-                                (cr, cc - 1), (cr, cc + 1),
-                            ])
+                            stack.extend(
+                                [
+                                    (cr - 1, cc),
+                                    (cr + 1, cc),
+                                    (cr, cc - 1),
+                                    (cr, cc + 1),
+                                ]
+                            )
 
                     if len(blob_pixels) >= self.min_blob_pixels:
-                        detection = self._blob_to_detection(
-                            frame, blob_pixels, classification
-                        )
+                        detection = self._blob_to_detection(frame, blob_pixels, classification)
                         if detection:
                             detections.append(detection)
 
@@ -252,7 +248,9 @@ if __name__ == "__main__":
 
     print(f"Detections: {len(detections)}")
     for d in detections:
-        print(f"  {d.classification}: center=({d.center_x},{d.center_y}) "
-              f"temp={d.mean_temp_c:.1f}°C conf={d.confidence:.2f}")
+        print(
+            f"  {d.classification}: center=({d.center_x},{d.center_y}) "
+            f"temp={d.mean_temp_c:.1f}°C conf={d.confidence:.2f}"
+        )
 
     print("thermal_processor.py OK")

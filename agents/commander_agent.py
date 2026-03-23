@@ -1,12 +1,15 @@
 """Commander decision agent — synthesizes all agent outputs into actionable decisions."""
+
 import json
-from typing import Any, Dict, List
+from typing import Dict
 from utils.logger import get_logger
+
 log = get_logger("AGENT_CDR")
 
 try:
     from langchain_openai import ChatOpenAI
     from langchain_core.messages import SystemMessage, HumanMessage
+
     LLM_AVAILABLE = True
 except ImportError:
     LLM_AVAILABLE = False
@@ -36,12 +39,16 @@ class CommanderAgent:
         css = state.get("css_result", {})
         if self._llm:
             try:
-                prompt = (f"Synthesize staff outputs:\nS2: {json.dumps(s2, default=str)[:500]}\n"
-                          f"S3: {json.dumps(s3, default=str)[:500]}\nS4: {json.dumps(s4, default=str)[:500]}")
-                resp = self._llm.invoke([SystemMessage(content=CDR_PROMPT), HumanMessage(content=prompt)])
+                prompt = (
+                    f"Synthesize staff outputs:\nS2: {json.dumps(s2, default=str)[:500]}\n"
+                    f"S3: {json.dumps(s3, default=str)[:500]}\nS4: {json.dumps(s4, default=str)[:500]}"
+                )
+                resp = self._llm.invoke(
+                    [SystemMessage(content=CDR_PROMPT), HumanMessage(content=prompt)]
+                )
                 try:
                     return json.loads(resp.content)
-                except:
+                except Exception:
                     return {"decision": resp.content}
             except Exception as e:
                 log.warning(f"LLM failed: {e}")
@@ -71,14 +78,16 @@ class CommanderAgent:
         threat = state.get("threat_level", 0.3) if state else 0.3
         n_units = len(state.get("units", {})) if state else 0
         n_contacts = len(state.get("contacts", {})) if state else 0
-        return (f"SITREP\n"
-                f"DTG: NOW\n"
-                f"1. ENEMY: {n_contacts} contacts, threat level {threat:.0%}\n"
-                f"2. FRIENDLY: {n_units} units operational\n"
-                f"3. OPERATIONS: Continuing assigned mission\n"
-                f"4. LOGISTICS: Supply status assessed\n"
-                f"5. COMMS: Primary nets operational\n"
-                f"6. GENERAL: No change to OPORD")
+        return (
+            f"SITREP\n"
+            f"DTG: NOW\n"
+            f"1. ENEMY: {n_contacts} contacts, threat level {threat:.0%}\n"
+            f"2. FRIENDLY: {n_units} units operational\n"
+            f"3. OPERATIONS: Continuing assigned mission\n"
+            f"4. LOGISTICS: Supply status assessed\n"
+            f"5. COMMS: Primary nets operational\n"
+            f"6. GENERAL: No change to OPORD"
+        )
 
     def assess_mission_accomplishment(self, state: Dict = None) -> float:
         if not state:
@@ -91,8 +100,13 @@ class CommanderAgent:
 
 if __name__ == "__main__":
     cdr = CommanderAgent()
-    state = {"s2_result": {"threat_level": 0.6}, "s4_result": {"supply_status": "AMBER"},
-             "units": {"B01": {}}, "contacts": {"R01": {}}, "threat_level": 0.6}
+    state = {
+        "s2_result": {"threat_level": 0.6},
+        "s4_result": {"supply_status": "AMBER"},
+        "units": {"B01": {}},
+        "contacts": {"R01": {}},
+        "threat_level": 0.6,
+    }
     decision = cdr.process(state)
     print(f"Decision: {decision['decision']}")
     print(cdr.generate_sitrep(state))

@@ -9,7 +9,7 @@ Records and replays battlefield state sequences for:
 
 import json
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Generator, List, Optional
@@ -24,6 +24,7 @@ REPLAY_DIR = Path("data/replays")
 @dataclass
 class ReplayEvent:
     """Single recorded event in a replay."""
+
     sequence: int
     timestamp: float
     event_type: str  # state, unit_update, contact, alert
@@ -95,12 +96,14 @@ class ReplayEngine:
         if not self._recording:
             return
 
-        self._events.append(ReplayEvent(
-            sequence=self._sequence,
-            timestamp=time.time() - self._record_start_time,
-            event_type=event_type,
-            data=data,
-        ))
+        self._events.append(
+            ReplayEvent(
+                sequence=self._sequence,
+                timestamp=time.time() - self._record_start_time,
+                event_type=event_type,
+                data=data,
+            )
+        )
         self._sequence += 1
 
     def save_replay(self, name: str) -> Path:
@@ -232,13 +235,15 @@ class ReplayEngine:
             try:
                 with open(f, "r", encoding="utf-8") as fp:
                     data = json.load(fp)
-                replays.append({
-                    "file": str(f),
-                    "name": data.get("name", ""),
-                    "created": data.get("created", ""),
-                    "event_count": data.get("event_count", 0),
-                    "duration_s": data.get("duration_s", 0),
-                })
+                replays.append(
+                    {
+                        "file": str(f),
+                        "name": data.get("name", ""),
+                        "created": data.get("created", ""),
+                        "event_count": data.get("event_count", 0),
+                        "duration_s": data.get("duration_s", 0),
+                    }
+                )
             except (json.JSONDecodeError, KeyError):
                 continue
         return replays

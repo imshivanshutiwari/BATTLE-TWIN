@@ -1,5 +1,5 @@
 """Tests for utils/config_loader.py."""
-import os
+
 from utils.config_loader import load_config
 
 
@@ -31,5 +31,6 @@ def test_load_ue5_config():
 
 def test_invalid_config_raises():
     import pytest
+
     with pytest.raises(FileNotFoundError):
         load_config("nonexistent_config_xyz")

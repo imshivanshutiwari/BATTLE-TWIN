@@ -2,9 +2,10 @@
 Acoustic event detector for battlefield sounds.
 Detects gunshots, explosions, and vehicles via FFT + TDOA.
 """
+
 import math
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 import numpy as np
 from utils.logger import get_logger
 
@@ -25,17 +26,28 @@ class AcousticEvent:
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "id": self.event_id, "type": self.event_type,
-            "confidence": self.confidence, "range_m": self.estimated_range_m,
-            "bearing_deg": self.estimated_bearing_deg, "snr_db": self.snr_db,
-            "peak_freq_hz": self.peak_frequency_hz, "duration_s": self.duration_s,
+            "id": self.event_id,
+            "type": self.event_type,
+            "confidence": self.confidence,
+            "range_m": self.estimated_range_m,
+            "bearing_deg": self.estimated_bearing_deg,
+            "snr_db": self.snr_db,
+            "peak_freq_hz": self.peak_frequency_hz,
+            "duration_s": self.duration_s,
         }
 
 
 class AcousticDetector:
-    def __init__(self, sample_rate=44100, buffer_size=4096, n_channels=4,
-                 array_spacing_m=0.5, snr_threshold_db=10.0, energy_threshold=0.01,
-                 speed_of_sound_mps=343.0):
+    def __init__(
+        self,
+        sample_rate=44100,
+        buffer_size=4096,
+        n_channels=4,
+        array_spacing_m=0.5,
+        snr_threshold_db=10.0,
+        energy_threshold=0.001,
+        speed_of_sound_mps=343.0,
+    ):
         self.sample_rate = sample_rate
         self.buffer_size = buffer_size
         self.n_channels = n_channels
@@ -54,7 +66,7 @@ class AcousticDetector:
         if audio_buffer.ndim == 1:
             audio_buffer = audio_buffer.reshape(1, -1)
         signal = audio_buffer[0]
-        energy = float(np.mean(signal ** 2))
+        energy = float(np.mean(signal**2))
         if self._background_power is None:
             self._background_power = energy
             return []
@@ -71,20 +83,25 @@ class AcousticDetector:
         event_type, confidence = self._classify(fft_result, freqs)
         bearing = self._estimate_bearing(audio_buffer) if audio_buffer.shape[0] >= 2 else 0.0
         range_m = self._estimate_range(snr, event_type)
-        above = signal ** 2 > self.energy_threshold
+        above = signal**2 > self.energy_threshold
         duration_s = float(np.sum(above)) / self.sample_rate
         self._event_count += 1
         event = AcousticEvent(
-            event_id=f"AC-{self._event_count:04d}", event_type=event_type,
-            timestamp=0.0, confidence=confidence, estimated_range_m=range_m,
-            estimated_bearing_deg=bearing, snr_db=snr,
-            peak_frequency_hz=peak_freq, duration_s=duration_s,
+            event_id=f"AC-{self._event_count:04d}",
+            event_type=event_type,
+            timestamp=0.0,
+            confidence=confidence,
+            estimated_range_m=range_m,
+            estimated_bearing_deg=bearing,
+            snr_db=snr,
+            peak_frequency_hz=peak_freq,
+            duration_s=duration_s,
         )
         self._events.append(event)
         return [event]
 
     def _classify(self, fft_mag, freqs):
-        total_power = float(np.sum(fft_mag ** 2))
+        total_power = float(np.sum(fft_mag**2))
         if total_power < 1e-10:
             return "UNKNOWN", 0.0
         gm = (freqs >= self.gunshot_range[0]) & (freqs <= self.gunshot_range[1])

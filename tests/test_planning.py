@@ -1,4 +1,5 @@
 """Tests for planning modules: D* Lite, MCTS COA, threat, VRP, MANET."""
+
 import numpy as np
 from planning.dstar_lite import DStarLitePlanner
 from planning.mcts_coa import MCTSCourseOfAction

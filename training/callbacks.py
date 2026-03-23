@@ -1,21 +1,31 @@
 """Training callbacks — logging, checkpointing, early stopping."""
+
 import time
-from typing import Any, Callable, Dict, List, Optional
+from typing import Dict, List
 from utils.logger import get_logger
+
 log = get_logger("CALLBACKS")
 
 try:
     import wandb
+
     WANDB_AVAILABLE = True
 except ImportError:
     WANDB_AVAILABLE = False
 
 
 class TrainingCallback:
-    def on_epoch_start(self, epoch: int, logs: Dict = None): pass
-    def on_epoch_end(self, epoch: int, logs: Dict = None): pass
-    def on_train_start(self, logs: Dict = None): pass
-    def on_train_end(self, logs: Dict = None): pass
+    def on_epoch_start(self, epoch: int, logs: Dict = None):
+        pass
+
+    def on_epoch_end(self, epoch: int, logs: Dict = None):
+        pass
+
+    def on_train_start(self, logs: Dict = None):
+        pass
+
+    def on_train_end(self, logs: Dict = None):
+        pass
 
 
 class LoggingCallback(TrainingCallback):
@@ -31,7 +41,7 @@ class EarlyStoppingCallback(TrainingCallback):
         self.patience = patience
         self.min_delta = min_delta
         self.monitor = monitor
-        self.best_value = float('inf') if "loss" in monitor else float('-inf')
+        self.best_value = float("inf") if "loss" in monitor else float("-inf")
         self.counter = 0
         self.should_stop = False
 
@@ -39,8 +49,11 @@ class EarlyStoppingCallback(TrainingCallback):
         if not logs:
             return
         current = logs.get(self.monitor, self.best_value)
-        improved = (current < self.best_value - self.min_delta if "loss" in self.monitor
-                    else current > self.best_value + self.min_delta)
+        improved = (
+            current < self.best_value - self.min_delta
+            if "loss" in self.monitor
+            else current > self.best_value + self.min_delta
+        )
         if improved:
             self.best_value = current
             self.counter = 0
@@ -90,11 +103,14 @@ class TimingCallback(TrainingCallback):
 
     def on_train_end(self, logs=None):
         total = time.time() - self._start
-        log.info(f"Training took {total:.1f}s, avg epoch: {sum(self.epoch_times)/max(len(self.epoch_times),1):.2f}s")
+        log.info(
+            f"Training took {total:.1f}s, avg epoch: {sum(self.epoch_times)/max(len(self.epoch_times), 1):.2f}s"
+        )
 
 
 class CallbackRunner:
     """Runs multiple callbacks."""
+
     def __init__(self, callbacks: List[TrainingCallback] = None):
         self.callbacks = callbacks or []
 
@@ -108,11 +124,15 @@ class CallbackRunner:
 
 
 if __name__ == "__main__":
-    runner = CallbackRunner([LoggingCallback(), TimingCallback(), EarlyStoppingCallback(patience=3)])
+    runner = CallbackRunner(
+        [LoggingCallback(), TimingCallback(), EarlyStoppingCallback(patience=3)]
+    )
     runner.fire("on_train_start")
     for e in range(10):
         runner.fire("on_epoch_start", epoch=e)
-        runner.fire("on_epoch_end", epoch=e, logs={"loss": 0.5 - e*0.04, "accuracy": 0.5 + e*0.04})
+        runner.fire(
+            "on_epoch_end", epoch=e, logs={"loss": 0.5 - e * 0.04, "accuracy": 0.5 + e * 0.04}
+        )
         if runner.should_stop:
             break
     runner.fire("on_train_end")

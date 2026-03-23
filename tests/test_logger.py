@@ -1,12 +1,13 @@
 """Tests for utils/logger.py — tactical logging."""
+
 import logging
 from utils.logger import get_logger, TacticalFormatter, ALERT_LEVELS
 
 
 def test_get_logger():
     log = get_logger("TEST_COMPONENT")
-    assert isinstance(log, logging.Logger)
-    assert log.name == "BT.TEST_COMPONENT"
+    assert isinstance(log, logging.LoggerAdapter)
+    assert log.logger.name == "BT.TEST_COMPONENT"
 
 
 def test_alert_levels_defined():

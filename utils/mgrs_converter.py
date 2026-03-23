@@ -15,7 +15,6 @@ import re
 from dataclasses import dataclass
 from typing import Tuple, Optional
 
-import numpy as np
 from pyproj import Proj, Transformer
 
 
@@ -40,6 +39,7 @@ _LAT_BANDS = "CDEFGHJKLMNPQRSTUVWX"
 @dataclass
 class MGRSCoord:
     """Military Grid Reference System coordinate."""
+
     zone_number: int
     zone_letter: str
     col_letter: str
@@ -83,14 +83,10 @@ class MGRSConverter:
         """Get or create a cached coordinate transformer."""
         key = (from_crs, to_crs)
         if key not in self._transformers:
-            self._transformers[key] = Transformer.from_crs(
-                from_crs, to_crs, always_xy=True
-            )
+            self._transformers[key] = Transformer.from_crs(from_crs, to_crs, always_xy=True)
         return self._transformers[key]
 
-    def latlon_to_utm(
-        self, lat: float, lon: float
-    ) -> Tuple[int, str, float, float]:
+    def latlon_to_utm(self, lat: float, lon: float) -> Tuple[int, str, float, float]:
         """
         Convert WGS84 lat/lon to UTM coordinates.
 
@@ -150,9 +146,7 @@ class MGRSConverter:
         lon, lat = proj(easting, northing, inverse=True)
         return lat, lon
 
-    def latlon_to_mgrs(
-        self, lat: float, lon: float, precision: int = 5
-    ) -> MGRSCoord:
+    def latlon_to_mgrs(self, lat: float, lon: float, precision: int = 5) -> MGRSCoord:
         """
         Convert WGS84 lat/lon to MGRS coordinate.
 
@@ -195,16 +189,21 @@ class MGRSConverter:
             precision=precision,
         )
 
-    def mgrs_to_latlon(self, mgrs_string: str) -> Tuple[float, float]:
+    def mgrs_to_latlon(self, mgrs_input) -> Tuple[float, float]:
         """
-        Convert MGRS string to WGS84 lat/lon.
+        Convert MGRS string or MGRSCoord to WGS84 lat/lon.
 
         Args:
-            mgrs_string: MGRS coordinate string (e.g., '11SPA1234567890').
+            mgrs_input: MGRS coordinate string (e.g., '11SPA1234567890')
+                        or an MGRSCoord object.
 
         Returns:
             (latitude, longitude) in decimal degrees.
         """
+        if isinstance(mgrs_input, MGRSCoord):
+            mgrs_string = str(mgrs_input)
+        else:
+            mgrs_string = mgrs_input
         parsed = self.parse_mgrs(mgrs_string)
         zone_number = parsed.zone_number
         zone_letter = parsed.zone_letter
@@ -213,9 +212,7 @@ class MGRSConverter:
         col_letters = _COL_LETTERS_BY_SET[set_number]
         col_idx = col_letters.index(parsed.col_letter)
 
-        row_letters = (
-            _ROW_LETTERS_ODD if zone_number % 2 == 1 else _ROW_LETTERS_EVEN
-        )
+        row_letters = _ROW_LETTERS_ODD if zone_number % 2 == 1 else _ROW_LETTERS_EVEN
         row_idx = row_letters.index(parsed.row_letter)
 
         multiplier = 10 ** (5 - parsed.precision)
@@ -225,15 +222,13 @@ class MGRSConverter:
         # Determine northing offset (which 2,000,000m band)
         northern = zone_letter >= "N"
         band_idx = _LAT_BANDS.index(zone_letter)
-        min_northing = (band_idx - 10) * 8 * 111320 if not northern else band_idx * 8 * 111320
+        _ = (band_idx - 10) * 8 * 111320 if not northern else band_idx * 8 * 111320
 
         # Find the correct 2,000,000m multiple
         northing = northing_base
         for mult in range(0, 100):
             candidate = mult * 2000000 + northing_base
-            lat_check, _ = self.utm_to_latlon(
-                zone_number, zone_letter, easting, candidate
-            )
+            lat_check, _ = self.utm_to_latlon(zone_number, zone_letter, easting, candidate)
             expected_band = _LAT_BANDS[min(int((lat_check + 80) / 8), 19)]
             if expected_band == zone_letter:
                 northing = candidate
@@ -282,21 +277,26 @@ class MGRSConverter:
 
     def distance_m(
         self,
-        coord1: MGRSCoord,
-        coord2: MGRSCoord,
+        lat1_or_coord1,
+        lon1_or_coord2,
+        lat2: Optional[float] = None,
+        lon2: Optional[float] = None,
     ) -> float:
         """
-        Compute distance in meters between two MGRS coordinates.
+        Compute distance in meters between two points.
 
-        Uses Haversine formula on converted lat/lon.
-
-        Args:
-            coord1: First MGRS coordinate.
-            coord2: Second MGRS coordinate.
+        Can be called as:
+          distance_m(lat1, lon1, lat2, lon2)   — four floats
+          distance_m(coord1, coord2)            — two MGRSCoord objects
 
         Returns:
             Distance in meters.
         """
+        if lat2 is not None and lon2 is not None:
+            # Called with four lat/lon floats
+            return self.haversine(lat1_or_coord1, lon1_or_coord2, lat2, lon2)
+        # Called with two MGRSCoord objects
+        coord1, coord2 = lat1_or_coord1, lon1_or_coord2
         lat1, lon1 = self.mgrs_to_latlon(str(coord1))
         lat2, lon2 = self.mgrs_to_latlon(str(coord2))
         return self.haversine(lat1, lon1, lat2, lon2)
@@ -314,22 +314,19 @@ class MGRSConverter:
         dphi = math.radians(lat2 - lat1)
         dlambda = math.radians(lon2 - lon1)
 
-        a = (
-            math.sin(dphi / 2) ** 2
-            + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
-        )
+        a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
         return R * c
 
-    def latlon_to_mgrs_string(
-        self, lat: float, lon: float, precision: int = 5
-    ) -> str:
+    def latlon_to_mgrs_string(self, lat: float, lon: float, precision: int = 5) -> str:
         """Convenience: lat/lon to MGRS string."""
         return str(self.latlon_to_mgrs(lat, lon, precision))
 
-    def bearing(
-        self, lat1: float, lon1: float, lat2: float, lon2: float
-    ) -> float:
+    def bearing_deg(self, lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+        """Alias for bearing(). Returns bearing in degrees (0-360)."""
+        return self.bearing(lat1, lon1, lat2, lon2)
+
+    def bearing(self, lat1: float, lon1: float, lat2: float, lon2: float) -> float:
         """
         Compute initial bearing from point 1 to point 2.
 

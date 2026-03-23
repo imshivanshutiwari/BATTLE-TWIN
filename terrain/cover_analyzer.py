@@ -1,7 +1,9 @@
 """Cover and concealment scoring for terrain analysis."""
+
 import numpy as np
-from typing import Dict, Tuple
+from typing import Dict
 from utils.logger import get_logger
+
 log = get_logger("COVER")
 
 
@@ -9,25 +11,44 @@ class CoverAnalyzer:
     """Scores terrain for cover (protection) and concealment (hiding)."""
 
     def __init__(self):
-        self.terrain_cover = {"FOREST": 0.3, "URBAN": 0.7, "SCRUB": 0.1, "WATER": 0.0, "OPEN": 0.0, "ROCK": 0.5}
-        self.terrain_concealment = {"FOREST": 0.9, "URBAN": 0.8, "SCRUB": 0.5, "WATER": 0.1, "OPEN": 0.1, "ROCK": 0.2}
+        self.terrain_cover = {
+            "FOREST": 0.3,
+            "URBAN": 0.7,
+            "SCRUB": 0.1,
+            "WATER": 0.0,
+            "OPEN": 0.0,
+            "ROCK": 0.5,
+        }
+        self.terrain_concealment = {
+            "FOREST": 0.9,
+            "URBAN": 0.8,
+            "SCRUB": 0.5,
+            "WATER": 0.1,
+            "OPEN": 0.1,
+            "ROCK": 0.2,
+        }
 
-    def compute_cover_score(self, terrain_grid: np.ndarray, terrain_labels: Dict[int, str]) -> np.ndarray:
+    def compute_cover_score(
+        self, terrain_grid: np.ndarray, terrain_labels: Dict[int, str]
+    ) -> np.ndarray:
         score = np.zeros_like(terrain_grid, dtype=np.float32)
         for val, label in terrain_labels.items():
             mask = terrain_grid == val
             score[mask] = self.terrain_cover.get(label, 0.0)
         return score
 
-    def compute_concealment_score(self, terrain_grid: np.ndarray, terrain_labels: Dict[int, str]) -> np.ndarray:
+    def compute_concealment_score(
+        self, terrain_grid: np.ndarray, terrain_labels: Dict[int, str]
+    ) -> np.ndarray:
         score = np.zeros_like(terrain_grid, dtype=np.float32)
         for val, label in terrain_labels.items():
             mask = terrain_grid == val
             score[mask] = self.terrain_concealment.get(label, 0.0)
         return score
 
-    def compute_combined_score(self, cover: np.ndarray, concealment: np.ndarray,
-                               cover_weight: float = 0.6) -> np.ndarray:
+    def compute_combined_score(
+        self, cover: np.ndarray, concealment: np.ndarray, cover_weight: float = 0.6
+    ) -> np.ndarray:
         return (cover_weight * cover + (1 - cover_weight) * concealment).astype(np.float32)
 
     def find_best_positions(self, combined: np.ndarray, n: int = 10) -> list:
@@ -38,6 +59,7 @@ class CoverAnalyzer:
 
     def compute_defilade_score(self, dem: np.ndarray, cell_size_m: float = 30.0) -> np.ndarray:
         from scipy.ndimage import uniform_filter
+
         local_mean = uniform_filter(dem, size=5)
         depression = np.clip(local_mean - dem, 0, None)
         return (depression / (depression.max() + 1e-10)).astype(np.float32)

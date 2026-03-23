@@ -91,7 +91,7 @@ class SentinelFetcher:
         )
 
         query = (
-            f"footprint:\"Intersects({footprint})\" AND "
+            f'footprint:"Intersects({footprint})" AND '
             f"platformname:Sentinel-2 AND "
             f"producttype:S2MSI2A AND "
             f"cloudcoverpercentage:[0 TO {max_cloud_pct}] AND "
@@ -163,9 +163,7 @@ class SentinelFetcher:
         Returns:
             RGB image array (H, W, 3) in uint8.
         """
-        cache_key = hashlib.sha256(
-            f"rgb_{bbox}_{width}_{height}".encode()
-        ).hexdigest()[:16]
+        cache_key = hashlib.sha256(f"rgb_{bbox}_{width}_{height}".encode()).hexdigest()[:16]
         cache_file = self.cache_dir / f"terrain_rgb_{cache_key}.npy"
 
         if cache_file.exists():
@@ -192,10 +190,9 @@ class SentinelFetcher:
         altitude_rad = np.radians(45)
         slope = np.arctan(np.sqrt(dx**2 + dy**2))
         aspect = np.arctan2(-dx, dy)
-        hillshade = (
-            np.sin(altitude_rad) * np.cos(slope)
-            + np.cos(altitude_rad) * np.sin(slope) * np.cos(azimuth_rad - aspect)
-        )
+        hillshade = np.sin(altitude_rad) * np.cos(slope) + np.cos(altitude_rad) * np.sin(
+            slope
+        ) * np.cos(azimuth_rad - aspect)
         hillshade = np.clip(hillshade, 0, 1)
 
         # Desert color palette (high desert terrain)
@@ -220,7 +217,7 @@ class SentinelFetcher:
 
         # Apply hillshade
         for c in range(3):
-            rgb[:, :, c] *= (0.4 + 0.6 * hillshade)
+            rgb[:, :, c] *= 0.4 + 0.6 * hillshade
 
         # Add subtle noise for texture
         noise = np.random.normal(0, 0.02, (height, width, 3))
@@ -258,9 +255,7 @@ class SentinelFetcher:
                 # Return terrain RGB as visualization base
         return self.generate_terrain_rgb(bbox, width, height)
 
-    def compute_ndvi(
-        self, red: np.ndarray, nir: np.ndarray
-    ) -> np.ndarray:
+    def compute_ndvi(self, red: np.ndarray, nir: np.ndarray) -> np.ndarray:
         """
         Compute Normalized Difference Vegetation Index.
 

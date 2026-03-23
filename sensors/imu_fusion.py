@@ -30,6 +30,7 @@ class MotionState(str, Enum):
 @dataclass
 class Quaternion:
     """Quaternion representation: w + xi + yj + zk."""
+
     w: float = 1.0
     x: float = 0.0
     y: float = 0.0
@@ -92,9 +93,15 @@ class MadgwickIMUFusion:
 
     def update(
         self,
-        ax: float, ay: float, az: float,
-        gx: float, gy: float, gz: float,
-        mx: float = 0.0, my: float = 0.0, mz: float = 0.0,
+        ax: float,
+        ay: float,
+        az: float,
+        gx: float,
+        gy: float,
+        gz: float,
+        mx: float = 0.0,
+        my: float = 0.0,
+        mz: float = 0.0,
         dt: Optional[float] = None,
     ) -> Quaternion:
         """
@@ -142,8 +149,26 @@ class MadgwickIMUFusion:
 
         # Gradient descent step (objective function gradient)
         s0 = _4q0 * q2q2 + _2q2 * ax + _4q0 * q1q1 - _2q1 * ay
-        s1 = _4q1 * q3q3 - _2q3 * ax + 4.0 * q0q0 * q.x - _2q0 * ay - _4q1 + _8q1 * q1q1 + _8q1 * q2q2 + _4q1 * az
-        s2 = 4.0 * q0q0 * q.y + _2q0 * ax + _4q2 * q3q3 - _2q3 * ay - _4q2 + _8q2 * q1q1 + _8q2 * q2q2 + _4q2 * az
+        s1 = (
+            _4q1 * q3q3
+            - _2q3 * ax
+            + 4.0 * q0q0 * q.x
+            - _2q0 * ay
+            - _4q1
+            + _8q1 * q1q1
+            + _8q1 * q2q2
+            + _4q1 * az
+        )
+        s2 = (
+            4.0 * q0q0 * q.y
+            + _2q0 * ax
+            + _4q2 * q3q3
+            - _2q3 * ay
+            - _4q2
+            + _8q2 * q1q1
+            + _8q2 * q2q2
+            + _4q2 * az
+        )
         s3 = 4.0 * q1q1 * q.z - _2q1 * ax + 4.0 * q2q2 * q.z - _2q2 * ay
 
         # Normalise gradient
@@ -231,9 +256,7 @@ class MadgwickIMUFusion:
         # Subtract gravity
         return accel - np.array([gx, gy, gz])
 
-    def detect_motion(
-        self, accel_history: Optional[List[np.ndarray]] = None
-    ) -> MotionState:
+    def detect_motion(self, accel_history: Optional[List[np.ndarray]] = None) -> MotionState:
         """
         Detect motion state from acceleration history.
 
@@ -247,7 +270,7 @@ class MadgwickIMUFusion:
 
         magnitudes = [np.linalg.norm(a) for a in history[-50:]]
         variance = np.var(magnitudes)
-        mean_mag = np.mean(magnitudes)
+        _ = np.mean(magnitudes)
 
         if variance < 0.005:
             return MotionState.STATIONARY
@@ -270,8 +293,12 @@ if __name__ == "__main__":
     # Simulate static IMU (gravity pointing down Z)
     for i in range(200):
         imu.update(
-            ax=0.0, ay=0.0, az=1.0,  # gravity on Z
-            gx=0.0, gy=0.0, gz=0.0,  # no rotation
+            ax=0.0,
+            ay=0.0,
+            az=1.0,  # gravity on Z
+            gx=0.0,
+            gy=0.0,
+            gz=0.0,  # no rotation
         )
 
     roll, pitch, yaw = imu.to_euler()

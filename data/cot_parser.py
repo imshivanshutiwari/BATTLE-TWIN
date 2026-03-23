@@ -48,6 +48,7 @@ COT_MULTICAST_PORT = 6969
 @dataclass
 class CoTEvent:
     """Parsed Cursor-on-Target event."""
+
     uid: str
     event_type: str
     time: datetime
@@ -56,8 +57,8 @@ class CoTEvent:
     latitude: float
     longitude: float
     hae: float  # Height Above Ellipsoid
-    ce: float   # Circular Error (meters)
-    le: float   # Linear Error (meters)
+    ce: float  # Circular Error (meters)
+    le: float  # Linear Error (meters)
     detail: Dict[str, Any] = field(default_factory=dict)
 
     @property
@@ -114,6 +115,7 @@ class CoTEvent:
 @dataclass
 class CoTContactReport:
     """Contact report extracted from CoT events."""
+
     uid: str
     callsign: str
     affiliation: str
@@ -186,8 +188,7 @@ class CoTParser:
             sub_children = list(child)
             if sub_children:
                 attrs["_children"] = [
-                    {"tag": sc.tag, **dict(sc.attrib), "text": sc.text}
-                    for sc in sub_children
+                    {"tag": sc.tag, **dict(sc.attrib), "text": sc.text} for sc in sub_children
                 ]
 
             if child.text and child.text.strip():
@@ -337,9 +338,7 @@ class CoTParser:
 
         try:
             sock.bind(("", port))
-            mreq = struct.pack(
-                "4sl", socket.inet_aton(host), socket.INADDR_ANY
-            )
+            mreq = struct.pack("4sl", socket.inet_aton(host), socket.INADDR_ANY)
             sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
             log.info(f"Listening for CoT on {host}:{port}")
 
@@ -400,13 +399,13 @@ class CoTParser:
             f'time="{now.isoformat()}" start="{now.isoformat()}" '
             f'stale="{stale.isoformat()}" how="h-e">'
             f'<point lat="{lat}" lon="{lon}" hae="{alt}" ce="10" le="10"/>'
-            f'<detail>'
+            f"<detail>"
             f'<contact callsign="{callsign}"/>'
             f'<track speed="{speed}" course="{course}"/>'
             f'<remarks source="BATTLE-TWIN"/>'
             f'<uid Droid="{callsign}"/>'
-            f'</detail>'
-            f'</event>'
+            f"</detail>"
+            f"</event>"
         )
 
 
@@ -415,21 +414,19 @@ if __name__ == "__main__":
 
     # Generate and parse sample CoT events
     sample_events = [
-        CoTParser.generate_sample_cot(
-            "BLUE-01", "WARHORSE-6", "a-f-G", 34.05, -117.45
-        ),
+        CoTParser.generate_sample_cot("BLUE-01", "WARHORSE-6", "a-f-G", 34.05, -117.45),
         CoTParser.generate_sample_cot(
             "RED-01", "HOSTILE-1", "a-h-G", 34.30, -117.15, speed=5.0, course=180
         ),
-        CoTParser.generate_sample_cot(
-            "UNKNOWN-01", "UNKNOWN-1", "a-u-G", 34.20, -117.30
-        ),
+        CoTParser.generate_sample_cot("UNKNOWN-01", "UNKNOWN-1", "a-u-G", 34.20, -117.30),
     ]
 
     events = parser.parse_batch(sample_events)
     for event in events:
-        print(f"UID: {event.uid}, Type: {event.type_name}, "
-              f"Pos: ({event.latitude}, {event.longitude})")
+        print(
+            f"UID: {event.uid}, Type: {event.type_name}, "
+            f"Pos: ({event.latitude}, {event.longitude})"
+        )
         report = parser.to_contact_report(event)
         print(f"  SALUTE:\n{report.to_salute()}")
 

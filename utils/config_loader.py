@@ -27,6 +27,7 @@ _CONFIGS_DIR = _PROJECT_ROOT / "configs"
 
 class ConfigValidationError(Exception):
     """Raised when a required config field is missing or invalid."""
+
     pass
 
 
@@ -69,6 +70,7 @@ def _resolve_env_vars(config: Any) -> Any:
         return [_resolve_env_vars(item) for item in config]
     elif isinstance(config, str) and "${" in config:
         import re
+
         pattern = r"\$\{([^}]+)\}"
         matches = re.findall(pattern, config)
         result = config
@@ -118,9 +120,7 @@ def load_config(
 
     config_path = _CONFIGS_DIR / config_name
     if not config_path.exists():
-        raise FileNotFoundError(
-            f"Configuration file not found: {config_path}"
-        )
+        raise FileNotFoundError(f"Configuration file not found: {config_path}")
 
     with open(config_path, "r", encoding="utf-8") as f:
         config = yaml.safe_load(f) or {}
@@ -156,9 +156,7 @@ def _validate_field_exists(config: Dict[str, Any], field_path: str) -> None:
     current = config
     for part in parts:
         if not isinstance(current, dict) or part not in current:
-            raise ConfigValidationError(
-                f"Required config field missing: '{field_path}'"
-            )
+            raise ConfigValidationError(f"Required config field missing: '{field_path}'")
         current = current[part]
 
 

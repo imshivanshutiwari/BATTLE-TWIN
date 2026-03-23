@@ -13,7 +13,7 @@ API: https://elevation.nationalmap.gov/arcgis/rest/services/
 import hashlib
 import io
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 import requests
@@ -103,19 +103,17 @@ class USGSDEMFetcher:
         }
 
         log.info(
-            f"Fetching DEM: bbox={bbox}, size={width}x{height}, "
-            f"resolution~{resolution_m}m"
+            f"Fetching DEM: bbox={bbox}, size={width}x{height}, " f"resolution~{resolution_m}m"
         )
 
         try:
-            response = self.session.get(
-                self.api_url, params=params, timeout=self.timeout_s
-            )
+            response = self.session.get(self.api_url, params=params, timeout=self.timeout_s)
             response.raise_for_status()
 
             # Parse TIFF response
             try:
                 import rasterio
+
                 with rasterio.open(io.BytesIO(response.content)) as dataset:
                     dem = dataset.read(1).astype(np.float32)
             except ImportError:
@@ -126,12 +124,13 @@ class USGSDEMFetcher:
             # Replace nodata with interpolated values
             nodata_mask = (dem < -1000) | np.isnan(dem)
             if nodata_mask.any():
-                from scipy.ndimage import generic_filter
                 dem[nodata_mask] = np.nanmean(dem[~nodata_mask])
 
             np.save(cache_file, dem)
-            log.info(f"DEM fetched: shape={dem.shape}, "
-                     f"elev range=[{dem.min():.0f}, {dem.max():.0f}]m")
+            log.info(
+                f"DEM fetched: shape={dem.shape}, "
+                f"elev range=[{dem.min():.0f}, {dem.max():.0f}]m"
+            )
             return dem
 
         except requests.RequestException as e:
@@ -177,6 +176,10 @@ class USGSDEMFetcher:
 
         # Gradient (higher to north/east, typical of desert terrain)
         dem += 100.0 * yy + 50.0 * xx
+
+        # Clamp to the physically realistic range for Fort Irwin NTC
+        # (high-desert terrain: ~700–1600 m)
+        dem = np.clip(dem, 650.0, 1900.0)
 
         return dem.astype(np.float32)
 

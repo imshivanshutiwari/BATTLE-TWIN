@@ -21,7 +21,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-import pandas as pd
 
 from data.osm_terrain_fetcher import OSMTerrainFetcher
 from data.adsb_fetcher import ADSBFetcher
@@ -40,6 +39,7 @@ CACHE_DIR = Path("data/cache")
 @dataclass
 class AODataset:
     """Complete Area of Operations dataset."""
+
     bbox: Tuple[float, float, float, float]
     ao_name: str
     timestamp: datetime = field(default_factory=lambda: datetime.now(tz=timezone.utc))
@@ -52,9 +52,9 @@ class AODataset:
     terrain_rgb: Optional[np.ndarray] = None
 
     # Vector features
-    roads: Optional[Any] = None        # GeoDataFrame
+    roads: Optional[Any] = None  # GeoDataFrame
     terrain_features: Optional[Any] = None  # GeoDataFrame
-    buildings: Optional[Any] = None    # GeoDataFrame
+    buildings: Optional[Any] = None  # GeoDataFrame
     military_features: Optional[Any] = None  # GeoDataFrame
 
     # Real-time data

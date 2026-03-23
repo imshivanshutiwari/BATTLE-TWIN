@@ -1,11 +1,12 @@
 """Train Bayesian threat model from historical contact data."""
-import json
+
 import numpy as np
 from pathlib import Path
 from typing import Dict, List
 from planning.threat_assessor import BayesianThreatAssessor
 from utils.logger import get_logger
 from utils.checkpoint import CheckpointManager
+
 log = get_logger("TRAIN_THREAT")
 
 
@@ -38,11 +39,16 @@ class ThreatTrainer:
                 true_threat = rng.uniform(0.2, 0.5)
             else:
                 true_threat = rng.uniform(0.0, 0.3)
-            samples.append({
-                "EnemyIntention": intent, "EnemyCapability": capability,
-                "TerrainAdvantage": terrain, "AirThreat": air, "IntelQuality": intel,
-                "true_threat": true_threat,
-            })
+            samples.append(
+                {
+                    "EnemyIntention": intent,
+                    "EnemyCapability": capability,
+                    "TerrainAdvantage": terrain,
+                    "AirThreat": air,
+                    "IntelQuality": intel,
+                    "true_threat": true_threat,
+                }
+            )
         return samples
 
     def train(self, epochs: int = 10, n_samples: int = 1000) -> Dict:
@@ -52,8 +58,16 @@ class ThreatTrainer:
         for epoch in range(epochs):
             errors = []
             for sample in data:
-                evidence = {k: sample[k] for k in ["EnemyIntention", "EnemyCapability",
-                            "TerrainAdvantage", "AirThreat", "IntelQuality"]}
+                evidence = {
+                    k: sample[k]
+                    for k in [
+                        "EnemyIntention",
+                        "EnemyCapability",
+                        "TerrainAdvantage",
+                        "AirThreat",
+                        "IntelQuality",
+                    ]
+                }
                 self.assessor.update_evidence(evidence)
                 predicted = self.assessor.query_threat(f"train_{epoch}")
                 error = abs(predicted - sample["true_threat"])
@@ -63,8 +77,10 @@ class ThreatTrainer:
             log.info(f"Epoch {epoch+1}/{epochs}: MAE={epoch_mae:.4f}")
         results["final_accuracy"] = 1.0 - results["epoch_losses"][-1]
         # Save checkpoint
-        self.ckpt.save({"assessor_state": "trained", "epochs": epochs,
-                        "accuracy": results["final_accuracy"]}, tag="threat_model")
+        self.ckpt.save(
+            {"assessor_state": "trained", "epochs": epochs, "accuracy": results["final_accuracy"]},
+            tag="threat_model",
+        )
         log.info(f"Training complete. Accuracy: {results['final_accuracy']:.3f}")
         return results
 
@@ -73,13 +89,24 @@ class ThreatTrainer:
         test_data = self.generate_training_data(n_test)
         errors = []
         for sample in test_data:
-            evidence = {k: sample[k] for k in ["EnemyIntention", "EnemyCapability",
-                        "TerrainAdvantage", "AirThreat", "IntelQuality"]}
+            evidence = {
+                k: sample[k]
+                for k in [
+                    "EnemyIntention",
+                    "EnemyCapability",
+                    "TerrainAdvantage",
+                    "AirThreat",
+                    "IntelQuality",
+                ]
+            }
             self.assessor.update_evidence(evidence)
             predicted = self.assessor.query_threat()
             errors.append(abs(predicted - sample["true_threat"]))
-        return {"test_mae": float(np.mean(errors)), "test_std": float(np.std(errors)),
-                "n_test": n_test}
+        return {
+            "test_mae": float(np.mean(errors)),
+            "test_std": float(np.std(errors)),
+            "n_test": n_test,
+        }
 
 
 if __name__ == "__main__":

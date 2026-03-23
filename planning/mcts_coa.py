@@ -2,11 +2,13 @@
 MCTS Course of Action generator.
 Generates and evaluates multiple COAs via Monte Carlo Tree Search.
 """
+
 import math
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from dataclasses import dataclass
+from typing import Dict, List
 import numpy as np
 from utils.logger import get_logger
+
 log = get_logger("MCTS_COA")
 
 ACTIONS = ["ATTACK", "DEFEND", "DELAY", "WITHDRAW", "CONSOLIDATE", "BYPASS", "ENVELOP"]
@@ -25,12 +27,21 @@ class COA:
     time_factor: float = 0.0
     resource_cost: float = 0.0
     brief: str = ""
+
     def to_dict(self):
-        return {"id": self.coa_id, "name": self.name, "actions": self.actions,
-                "score": self.score, "feasibility": self.feasibility,
-                "acceptability": self.acceptability, "suitability": self.suitability,
-                "risk": self.risk, "time": self.time_factor, "resource_cost": self.resource_cost,
-                "brief": self.brief}
+        return {
+            "id": self.coa_id,
+            "name": self.name,
+            "actions": self.actions,
+            "score": self.score,
+            "feasibility": self.feasibility,
+            "acceptability": self.acceptability,
+            "suitability": self.suitability,
+            "risk": self.risk,
+            "time": self.time_factor,
+            "resource_cost": self.resource_cost,
+            "brief": self.brief,
+        }
 
 
 class MCTSNode:
@@ -40,12 +51,14 @@ class MCTSNode:
         self.children: List["MCTSNode"] = []
         self.visits = 0
         self.total_reward = 0.0
+
     @property
     def avg_reward(self):
         return self.total_reward / max(self.visits, 1)
+
     def ucb1(self, c=1.414):
         if self.visits == 0:
-            return float('inf')
+            return float("inf")
         parent_visits = self.parent.visits if self.parent else 1
         return self.avg_reward + c * math.sqrt(math.log(parent_visits) / self.visits)
 
@@ -57,8 +70,11 @@ class MCTSCourseOfAction:
         self.exploration_c = exploration_c
         self.max_depth = max_depth
         self.reward_weights = reward_weights or {
-            "terrain_advantage": 0.25, "force_ratio": 0.30,
-            "logistics_sustainability": 0.20, "time_factor": 0.15, "risk": 0.10,
+            "terrain_advantage": 0.25,
+            "force_ratio": 0.30,
+            "logistics_sustainability": 0.20,
+            "time_factor": 0.15,
+            "risk": 0.10,
         }
         self._rng = np.random.default_rng(42)
 
@@ -118,8 +134,7 @@ class MCTSCourseOfAction:
             node.total_reward += reward
             node = node.parent
 
-    def generate_coas(self, state: Dict, n_coas: int = 5,
-                      n_simulations: int = 1000) -> List[COA]:
+    def generate_coas(self, state: Dict, n_coas: int = 5, n_simulations: int = 1000) -> List[COA]:
         root = MCTSNode()
         for _ in range(n_simulations):
             leaf = self._select(root)
@@ -145,8 +160,10 @@ class MCTSCourseOfAction:
                 else:
                     actions.append(self._rng.choice(ACTIONS))
             coa = COA(
-                coa_id=f"COA-{i+1}", name=f"COA {actions[0]}-{actions[1]}",
-                actions=actions, score=child.avg_reward,
+                coa_id=f"COA-{i+1}",
+                name=f"COA {actions[0]}-{actions[1]}",
+                actions=actions,
+                score=child.avg_reward,
                 feasibility=0.5 + child.avg_reward * 0.5,
                 acceptability=0.6 + child.avg_reward * 0.3,
                 suitability=child.avg_reward,
@@ -167,21 +184,27 @@ class MCTSCourseOfAction:
 
     def brief_coa(self, coa: COA) -> str:
         phase_strs = [f"Phase {i+1}: {a}" for i, a in enumerate(coa.actions[:5])]
-        return (f"{coa.name}\n" + "\n".join(phase_strs) +
-                f"\nOverall Score: {coa.score:.2f}, Risk: {coa.risk:.2f}")
+        return (
+            f"{coa.name}\n"
+            + "\n".join(phase_strs)
+            + f"\nOverall Score: {coa.score:.2f}, Risk: {coa.risk:.2f}"
+        )
 
     def get_mcts_tree_data(self, root: MCTSNode = None, max_depth: int = 3) -> Dict:
         """Export partial tree for visualization."""
         if root is None:
             return {}
+
         def _export(node, depth):
             if depth > max_depth:
                 return None
             return {
-                "action": node.action, "visits": node.visits,
+                "action": node.action,
+                "visits": node.visits,
                 "reward": node.avg_reward,
-                "children": [_export(c, depth+1) for c in node.children[:5] if c.visits > 0],
+                "children": [_export(c, depth + 1) for c in node.children[:5] if c.visits > 0],
             }
+
         return _export(root, 0)
 
 

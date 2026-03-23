@@ -29,6 +29,7 @@ CACHE_DIR = Path("data/cache")
 @dataclass
 class WeatherCondition:
     """Weather conditions at a specific location and time."""
+
     timestamp: datetime
     latitude: float
     longitude: float
@@ -153,9 +154,7 @@ class WeatherFetcher:
             sunset = datetime.fromtimestamp(sys_data["sunset"], tz=timezone.utc)
 
         return WeatherCondition(
-            timestamp=datetime.fromtimestamp(
-                data.get("dt", time.time()), tz=timezone.utc
-            ),
+            timestamp=datetime.fromtimestamp(data.get("dt", time.time()), tz=timezone.utc),
             latitude=lat,
             longitude=lon,
             temperature_c=main.get("temp", 20.0),
@@ -315,9 +314,7 @@ class WeatherFetcher:
         wind_east = -condition.wind_speed_mps * np.sin(wind_rad)
         return float(wind_north), float(wind_east)
 
-    def _default_conditions(
-        self, lat: float, lon: float
-    ) -> WeatherCondition:
+    def _default_conditions(self, lat: float, lon: float) -> WeatherCondition:
         """Return physically reasonable default weather conditions."""
         return WeatherCondition(
             timestamp=datetime.now(tz=timezone.utc),

@@ -1,4 +1,5 @@
 """Tests for terrain modules."""
+
 import numpy as np
 from terrain.dem_processor import DEMProcessor
 from terrain.slope_calculator import SlopeCalculator
@@ -25,8 +26,8 @@ def test_viewshed_local_visibility():
     calc = LOSCalculator()
     dem = np.ones((50, 50), dtype=np.float32) * 500
     vs = calc.compute_viewshed(dem, (25, 25), max_range_m=1500)
-    assert vs[25, 25] == True  # observer sees self
-    assert vs[26, 26] == True  # adjacent visible on flat
+    assert vs[25, 25]  # observer sees self
+    assert vs[26, 26]  # adjacent visible on flat
 
 
 def test_trafficability_steep():

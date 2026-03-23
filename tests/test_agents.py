@@ -1,4 +1,5 @@
 """Tests for agent modules and graph runner."""
+
 from agents.s2_intel_agent import S2IntelAgent
 from agents.s3_maneuver_agent import S3ManeuverAgent
 from agents.fso_fires_agent import FSOFiresAgent
@@ -48,8 +49,17 @@ def test_css_medevac_9line():
 def test_graph_runner_sequential():
     runner = GraphRunner()
     state = {
-        "units": {"B01": {"uid": "B01", "callsign": "W1", "lat": 34.05, "lon": -117.45,
-                           "ammo_pct": 60, "fuel_pct": 70, "water_pct": 80}},
+        "units": {
+            "B01": {
+                "uid": "B01",
+                "callsign": "W1",
+                "lat": 34.05,
+                "lon": -117.45,
+                "ammo_pct": 60,
+                "fuel_pct": 70,
+                "water_pct": 80,
+            }
+        },
         "contacts": {"R01": {"uid": "R01", "lat": 34.3, "lon": -117.15, "confidence": 0.8}},
         "objectives": [{"name": "OBJ ALPHA"}],
     }

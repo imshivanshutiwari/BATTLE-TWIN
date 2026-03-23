@@ -1,4 +1,5 @@
 """Tests for data fetcher modules."""
+
 from data.osm_terrain_fetcher import OSMTerrainFetcher
 from data.weather_fetcher import WeatherFetcher
 from data.adsb_fetcher import ADSBFetcher, Aircraft
@@ -41,6 +42,7 @@ def test_dem_fetcher_realistic():
 
 def test_dem_slope():
     import numpy as np
+
     fetcher = USGSDEMFetcher()
     dem = np.random.uniform(800, 1200, (50, 50)).astype(np.float32)
     slope = fetcher.compute_slope(dem)
@@ -50,6 +52,7 @@ def test_dem_slope():
 
 def test_dem_trafficability():
     import numpy as np
+
     fetcher = USGSDEMFetcher()
     slope = np.array([[5.0, 20.0, 40.0]])
     traff = fetcher.compute_trafficability(slope)
@@ -76,6 +79,9 @@ def test_cot_hostile():
 
 def test_cot_batch():
     parser = CoTParser()
-    xmls = [CoTParser.generate_sample_cot(f"U{i}", f"C{i}", "a-f-G", 34+i*0.01, -117) for i in range(5)]
+    xmls = [
+        CoTParser.generate_sample_cot(f"U{i}", f"C{i}", "a-f-G", 34 + i * 0.01, -117)
+        for i in range(5)
+    ]
     events = parser.parse_batch(xmls)
     assert len(events) == 5

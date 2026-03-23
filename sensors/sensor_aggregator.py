@@ -2,13 +2,14 @@
 Multi-sensor data fusion aggregator.
 Combines IMU, GPS, thermal, and acoustic sensor data into unified position/state.
 """
+
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 import numpy as np
-from sensors.imu_fusion import MadgwickIMUFusion, MotionState
+from sensors.imu_fusion import MadgwickIMUFusion
 from sensors.gps_kalman import GPSKalmanTracker, GPSMeasurement, UnitPosition
-from sensors.thermal_processor import ThermalProcessor, ThermalDetection
-from sensors.acoustic_detector import AcousticDetector, AcousticEvent
+from sensors.thermal_processor import ThermalProcessor
+from sensors.acoustic_detector import AcousticDetector
 from utils.logger import get_logger
 
 log = get_logger("SENSOR_AGG")
@@ -60,7 +61,7 @@ class SensorAggregator:
         self._latest_state = FusedSensorState()
 
     def update_imu(self, ax, ay, az, gx, gy, gz, dt=None):
-        q = self.imu.update(ax, ay, az, gx, gy, gz, dt=dt)
+        _ = self.imu.update(ax, ay, az, gx, gy, gz, dt=dt)
         euler = self.imu.to_euler()
         motion = self.imu.detect_motion()
         self._latest_state.orientation_euler = euler

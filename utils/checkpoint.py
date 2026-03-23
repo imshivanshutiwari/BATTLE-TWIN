@@ -214,9 +214,7 @@ class CheckpointManager:
         with open(filepath, "r", encoding="utf-8") as f:
             return json.load(f)
 
-    def get_latest_checkpoint(
-        self, name: str = "model", extension: str = ".pt"
-    ) -> Optional[Path]:
+    def get_latest_checkpoint(self, name: str = "model", extension: str = ".pt") -> Optional[Path]:
         """Get the most recent checkpoint file for a given name."""
         candidates = sorted(
             self.checkpoint_dir.glob(f"{name}_*{extension}"),
@@ -225,9 +223,7 @@ class CheckpointManager:
         )
         return candidates[0] if candidates else None
 
-    def list_checkpoints(
-        self, name: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+    def list_checkpoints(self, name: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         List all checkpoints, optionally filtered by name.
 
@@ -250,9 +246,7 @@ class CheckpointManager:
         """Check if enough time has passed for auto-save."""
         return (time.time() - self._last_save_time) >= self.auto_save_interval_s
 
-    def _rotate_checkpoints(
-        self, name: str, extension: str = ".pt"
-    ) -> None:
+    def _rotate_checkpoints(self, name: str, extension: str = ".pt") -> None:
         """Remove oldest checkpoints exceeding max_checkpoints."""
         candidates = sorted(
             self.checkpoint_dir.glob(f"{name}_*{extension}"),

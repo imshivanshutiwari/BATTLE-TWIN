@@ -1,16 +1,20 @@
 """Radio link quality modeling for MANET simulation."""
+
 import math
-import numpy as np
-from typing import Dict, Tuple
 from utils.logger import get_logger
+
 log = get_logger("LINK_QUAL")
 
 
 class LinkQualityModel:
     """Models RF propagation and link quality between nodes."""
 
-    def __init__(self, freq_mhz: float = 225.0, tx_power_dbm: float = 37.0,
-                 rx_sensitivity_dbm: float = -100.0):
+    def __init__(
+        self,
+        freq_mhz: float = 225.0,
+        tx_power_dbm: float = 37.0,
+        rx_sensitivity_dbm: float = -100.0,
+    ):
         self.freq_mhz = freq_mhz
         self.tx_power_dbm = tx_power_dbm
         self.rx_sensitivity_dbm = rx_sensitivity_dbm
@@ -19,16 +23,18 @@ class LinkQualityModel:
         """Friis free-space path loss."""
         if distance_m <= 0:
             return 0.0
-        return 20*math.log10(distance_m) + 20*math.log10(self.freq_mhz) - 27.55
+        return 20 * math.log10(distance_m) + 20 * math.log10(self.freq_mhz) - 27.55
 
-    def two_ray_ground_loss_db(self, distance_m: float, ht_m: float = 2.0, hr_m: float = 2.0) -> float:
+    def two_ray_ground_loss_db(
+        self, distance_m: float, ht_m: float = 2.0, hr_m: float = 2.0
+    ) -> float:
         """Two-ray ground reflection model."""
         if distance_m <= 0:
             return 0.0
         crossover = (4 * math.pi * ht_m * hr_m) / (3e8 / (self.freq_mhz * 1e6))
         if distance_m < crossover:
             return self.free_space_loss_db(distance_m)
-        return 40*math.log10(distance_m) - 20*math.log10(ht_m) - 20*math.log10(hr_m)
+        return 40 * math.log10(distance_m) - 20 * math.log10(ht_m) - 20 * math.log10(hr_m)
 
     def terrain_attenuation_db(self, terrain_type: str) -> float:
         atten = {"OPEN": 0, "SCRUB": 3, "FOREST": 12, "URBAN": 18, "DENSE_URBAN": 25, "WATER": -2}
@@ -41,8 +47,7 @@ class LinkQualityModel:
             rain = 0.01 * rain_rate_mmh * distance_km
         return base + rain
 
-    def compute_rssi(self, distance_m: float, terrain: str = "OPEN",
-                     rain_rate: float = 0) -> float:
+    def compute_rssi(self, distance_m: float, terrain: str = "OPEN", rain_rate: float = 0) -> float:
         """Compute received signal strength indicator."""
         path_loss = self.two_ray_ground_loss_db(distance_m)
         terrain_loss = self.terrain_attenuation_db(terrain)
@@ -64,7 +69,7 @@ class LinkQualityModel:
 
     def compute_throughput_kbps(self, link_quality: float, max_rate_kbps: float = 2400) -> float:
         """Estimate effective throughput."""
-        return max_rate_kbps * link_quality * (1 - (1 - link_quality)**8)
+        return max_rate_kbps * link_quality * (1 - (1 - link_quality) ** 8)
 
     def get_max_range_m(self, terrain: str = "OPEN") -> float:
         """Estimate maximum comms range."""

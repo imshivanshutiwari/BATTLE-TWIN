@@ -10,15 +10,12 @@ Core data structures:
 """
 
 import json
-import struct
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
-import numpy as np
-
-from utils.mgrs_converter import MGRSConverter, MGRSCoord
+from utils.mgrs_converter import MGRSConverter
 
 
 _mgrs = MGRSConverter()
@@ -57,6 +54,7 @@ class Affiliation(str, Enum):
 @dataclass
 class UnitState:
     """Individual unit state in the digital twin."""
+
     uid: str
     callsign: str
     unit_type: str
@@ -115,6 +113,7 @@ class UnitState:
 @dataclass
 class ContactReport:
     """Enemy contact observation report."""
+
     uid: str
     callsign: str
     affiliation: str = "HOSTILE"
@@ -151,6 +150,7 @@ class ContactReport:
 @dataclass
 class PhaseLine:
     """Tactical control measure — phase line."""
+
     name: str
     line_type: str  # line_of_departure, phase_line, limit_of_advance
     coordinates: List[Tuple[float, float]] = field(default_factory=list)
@@ -163,6 +163,7 @@ class PhaseLine:
 @dataclass
 class Objective:
     """Tactical objective."""
+
     name: str
     obj_type: str  # seize, secure, destroy
     center_lat: float = 0.0
@@ -177,6 +178,7 @@ class Objective:
 @dataclass
 class FireMission:
     """Fire support mission."""
+
     mission_id: str
     target_lat: float
     target_lon: float
@@ -197,16 +199,17 @@ class FireMission:
 @dataclass
 class MEDEVACRequest:
     """9-line MEDEVAC request."""
+
     request_id: str
     line1_location: str  # Grid of pickup site
     line2_frequency: str  # Radio frequency/callsign
-    line3_patients: str   # Number of patients by precedence
+    line3_patients: str  # Number of patients by precedence
     line4_equipment: str  # Special equipment required
     line5_patients_type: str  # Number of patients by type (litter/ambulatory)
-    line6_security: str   # Security at pickup site
-    line7_marking: str    # Method of marking pickup site
+    line6_security: str  # Security at pickup site
+    line7_marking: str  # Method of marking pickup site
     line8_nationality: str  # Patient nationality/status
-    line9_terrain: str    # NBC contamination / terrain description
+    line9_terrain: str  # NBC contamination / terrain description
     precedence: str = "ROUTINE"  # URGENT, PRIORITY, ROUTINE
     status: str = "REQUESTED"  # REQUESTED, DISPATCHED, EN_ROUTE, COMPLETE
     lat: float = 0.0
@@ -276,14 +279,16 @@ class BattlefieldState:
         details: str,
     ) -> None:
         """Add an alert to the log."""
-        self.alerts.append({
-            "timestamp": datetime.now(tz=timezone.utc).isoformat(),
-            "level": level,
-            "unit_id": unit_id,
-            "type": alert_type,
-            "details": details,
-            "acknowledged": False,
-        })
+        self.alerts.append(
+            {
+                "timestamp": datetime.now(tz=timezone.utc).isoformat(),
+                "level": level,
+                "unit_id": unit_id,
+                "type": alert_type,
+                "details": details,
+                "acknowledged": False,
+            }
+        )
         # Keep last 100 alerts
         if len(self.alerts) > 100:
             self.alerts = self.alerts[-100:]
@@ -317,35 +322,37 @@ class BattlefieldState:
             "contacts": [],
         }
         for u in self.units.values():
-            data["units"].append({
-                "uid": u.uid,
-                "type": u.unit_type,
-                "lat": u.lat,
-                "lon": u.lon,
-                "alt": u.altitude_m,
-                "hdg": u.heading_deg,
-                "spd": u.speed_mps,
-                "str": u.strength_pct,
-                "thr": u.threat_level,
-                "aff": u.affiliation,
-            })
+            data["units"].append(
+                {
+                    "uid": u.uid,
+                    "type": u.unit_type,
+                    "lat": u.lat,
+                    "lon": u.lon,
+                    "alt": u.altitude_m,
+                    "hdg": u.heading_deg,
+                    "spd": u.speed_mps,
+                    "str": u.strength_pct,
+                    "thr": u.threat_level,
+                    "aff": u.affiliation,
+                }
+            )
         for c in self.contacts.values():
-            data["contacts"].append({
-                "uid": c.uid,
-                "lat": c.lat,
-                "lon": c.lon,
-                "alt": c.altitude_m,
-                "hdg": c.heading_deg,
-                "conf": c.confidence,
-                "aff": c.affiliation,
-            })
+            data["contacts"].append(
+                {
+                    "uid": c.uid,
+                    "lat": c.lat,
+                    "lon": c.lon,
+                    "alt": c.altitude_m,
+                    "hdg": c.heading_deg,
+                    "conf": c.confidence,
+                    "aff": c.affiliation,
+                }
+            )
         return json.dumps(data, separators=(",", ":")).encode("utf-8")
 
     def compute_force_ratio(self) -> float:
         """Compute friendly:hostile force ratio."""
-        friendly = sum(
-            1 for u in self.units.values() if u.affiliation == "FRIENDLY"
-        )
+        friendly = sum(1 for u in self.units.values() if u.affiliation == "FRIENDLY")
         hostile = max(len(self.contacts), 1)
         return friendly / hostile
 
@@ -379,51 +386,59 @@ class BattlefieldState:
 
         # Add friendly units
         for unit_cfg in config.get("friendly_units", []):
-            state.add_unit(UnitState(
-                uid=unit_cfg["uid"],
-                callsign=unit_cfg["callsign"],
-                unit_type=unit_cfg.get("unit_type", "infantry"),
-                lat=unit_cfg["initial_lat"],
-                lon=unit_cfg["initial_lon"],
-                strength_pct=unit_cfg.get("strength_pct", 100),
-                ammo_pct=unit_cfg.get("ammo_pct", 100),
-                fuel_pct=unit_cfg.get("fuel_pct", 100),
-                water_pct=unit_cfg.get("water_pct", 100),
-                affiliation="FRIENDLY",
-                designation=unit_cfg.get("designation", ""),
-            ))
+            state.add_unit(
+                UnitState(
+                    uid=unit_cfg["uid"],
+                    callsign=unit_cfg["callsign"],
+                    unit_type=unit_cfg.get("unit_type", "infantry"),
+                    lat=unit_cfg["initial_lat"],
+                    lon=unit_cfg["initial_lon"],
+                    strength_pct=unit_cfg.get("strength_pct", 100),
+                    ammo_pct=unit_cfg.get("ammo_pct", 100),
+                    fuel_pct=unit_cfg.get("fuel_pct", 100),
+                    water_pct=unit_cfg.get("water_pct", 100),
+                    affiliation="FRIENDLY",
+                    designation=unit_cfg.get("designation", ""),
+                )
+            )
 
         # Add hostile contacts
         for contact_cfg in config.get("hostile_contacts_initial", []):
-            state.add_contact(ContactReport(
-                uid=contact_cfg["uid"],
-                callsign=contact_cfg["callsign"],
-                lat=contact_cfg["last_known_lat"],
-                lon=contact_cfg["last_known_lon"],
-                confidence=contact_cfg.get("confidence", 0.5),
-                source=contact_cfg.get("source", "UNKNOWN"),
-                strength_estimate=contact_cfg.get("strength_estimate", "unknown"),
-            ))
+            state.add_contact(
+                ContactReport(
+                    uid=contact_cfg["uid"],
+                    callsign=contact_cfg["callsign"],
+                    lat=contact_cfg["last_known_lat"],
+                    lon=contact_cfg["last_known_lon"],
+                    confidence=contact_cfg.get("confidence", 0.5),
+                    source=contact_cfg.get("source", "UNKNOWN"),
+                    strength_estimate=contact_cfg.get("strength_estimate", "unknown"),
+                )
+            )
 
         # Add phase lines
         for pl_cfg in config.get("phase_lines", []):
             coords = [tuple(c) for c in pl_cfg.get("coordinates", [])]
-            state.phase_lines.append(PhaseLine(
-                name=pl_cfg["name"],
-                line_type=pl_cfg.get("type", "phase_line"),
-                coordinates=coords,
-                color=pl_cfg.get("color", "#00ff00"),
-            ))
+            state.phase_lines.append(
+                PhaseLine(
+                    name=pl_cfg["name"],
+                    line_type=pl_cfg.get("type", "phase_line"),
+                    coordinates=coords,
+                    color=pl_cfg.get("color", "#00ff00"),
+                )
+            )
 
         # Add objectives
         for obj_cfg in config.get("objectives", []):
-            state.objectives.append(Objective(
-                name=obj_cfg["name"],
-                obj_type=obj_cfg.get("type", "seize"),
-                center_lat=obj_cfg.get("center_lat", 0),
-                center_lon=obj_cfg.get("center_lon", 0),
-                radius_m=obj_cfg.get("radius_m", 500),
-            ))
+            state.objectives.append(
+                Objective(
+                    name=obj_cfg["name"],
+                    obj_type=obj_cfg.get("type", "seize"),
+                    center_lat=obj_cfg.get("center_lat", 0),
+                    center_lon=obj_cfg.get("center_lon", 0),
+                    radius_m=obj_cfg.get("radius_m", 500),
+                )
+            )
 
         return state
 
@@ -432,14 +447,21 @@ if __name__ == "__main__":
     # Create state from config
     try:
         from utils.config_loader import load_config
+
         config = load_config("battlefield_config")
         state = BattlefieldState.from_config(config)
     except FileNotFoundError:
         state = BattlefieldState()
-        state.add_unit(UnitState(uid="BLUE-01", callsign="WARHORSE-6",
-                                 unit_type="infantry", lat=34.05, lon=-117.45))
-        state.add_contact(ContactReport(uid="RED-01", callsign="HOSTILE-1",
-                                        lat=34.30, lon=-117.15, confidence=0.85))
+        state.add_unit(
+            UnitState(
+                uid="BLUE-01", callsign="WARHORSE-6", unit_type="infantry", lat=34.05, lon=-117.45
+            )
+        )
+        state.add_contact(
+            ContactReport(
+                uid="RED-01", callsign="HOSTILE-1", lat=34.30, lon=-117.15, confidence=0.85
+            )
+        )
 
     print(f"Units: {len(state.units)}")
     print(f"Contacts: {len(state.contacts)}")

@@ -9,15 +9,14 @@ Fetches REAL geographic data for the battlefield area of operations:
 - Combined tactical map assembly
 """
 
-import json
 import hashlib
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import requests
-import numpy as np
 import geopandas as gpd
-from shapely.geometry import shape, LineString, Polygon, Point, MultiPolygon
+import pandas as pd
+from shapely.geometry import LineString, Polygon, Point
 
 from utils.logger import get_logger
 
@@ -121,9 +120,7 @@ class OSMTerrainFetcher:
                 outer_coords = []
                 for member in elem.get("members", []):
                     if member.get("role") == "outer" and "geometry" in member:
-                        coords = [
-                            (pt["lon"], pt["lat"]) for pt in member["geometry"]
-                        ]
+                        coords = [(pt["lon"], pt["lat"]) for pt in member["geometry"]]
                         outer_coords.extend(coords)
                 if len(outer_coords) >= 4:
                     try:
@@ -145,9 +142,7 @@ class OSMTerrainFetcher:
         """Convert (min_lat, min_lon, max_lat, max_lon) to Overpass bbox format."""
         return f"{bbox[0]},{bbox[1]},{bbox[2]},{bbox[3]}"
 
-    def fetch_military_features(
-        self, bbox: Tuple[float, float, float, float]
-    ) -> gpd.GeoDataFrame:
+    def fetch_military_features(self, bbox: Tuple[float, float, float, float]) -> gpd.GeoDataFrame:
         """
         Fetch military features from OpenStreetMap.
 
@@ -180,9 +175,7 @@ class OSMTerrainFetcher:
             self._save_cache(cache_key, gdf)
         return gdf
 
-    def fetch_roads(
-        self, bbox: Tuple[float, float, float, float]
-    ) -> gpd.GeoDataFrame:
+    def fetch_roads(self, bbox: Tuple[float, float, float, float]) -> gpd.GeoDataFrame:
         """
         Fetch road network from OpenStreetMap.
 
@@ -212,8 +205,13 @@ class OSMTerrainFetcher:
 
         # Classify trafficability by highway type
         speed_map = {
-            "motorway": 100, "trunk": 80, "primary": 60,
-            "secondary": 40, "tertiary": 30, "unclassified": 20, "track": 10,
+            "motorway": 100,
+            "trunk": 80,
+            "primary": 60,
+            "secondary": 40,
+            "tertiary": 30,
+            "unclassified": 20,
+            "track": 10,
         }
         if not gdf.empty and "highway" in gdf.columns:
             gdf["speed_kph"] = gdf["highway"].map(speed_map).fillna(15)
@@ -225,9 +223,7 @@ class OSMTerrainFetcher:
             self._save_cache(cache_key, gdf)
         return gdf
 
-    def fetch_terrain_features(
-        self, bbox: Tuple[float, float, float, float]
-    ) -> gpd.GeoDataFrame:
+    def fetch_terrain_features(self, bbox: Tuple[float, float, float, float]) -> gpd.GeoDataFrame:
         """
         Fetch terrain classification features.
 
@@ -260,6 +256,7 @@ class OSMTerrainFetcher:
 
         # Classify terrain type for tactical analysis
         if not gdf.empty:
+
             def classify_terrain(row):
                 natural = row.get("natural", "")
                 landuse = row.get("landuse", "")
@@ -277,12 +274,18 @@ class OSMTerrainFetcher:
 
             # Concealment and cover scores for tactical planning
             concealment_map = {
-                "FOREST": 0.9, "URBAN": 0.8, "SCRUB": 0.5,
-                "WATER": 0.1, "OPEN": 0.1,
+                "FOREST": 0.9,
+                "URBAN": 0.8,
+                "SCRUB": 0.5,
+                "WATER": 0.1,
+                "OPEN": 0.1,
             }
             cover_map = {
-                "FOREST": 0.3, "URBAN": 0.7, "SCRUB": 0.1,
-                "WATER": 0.0, "OPEN": 0.0,
+                "FOREST": 0.3,
+                "URBAN": 0.7,
+                "SCRUB": 0.1,
+                "WATER": 0.0,
+                "OPEN": 0.0,
             }
             gdf["concealment_score"] = gdf["terrain_class"].map(concealment_map)
             gdf["cover_score"] = gdf["terrain_class"].map(cover_map)
@@ -291,9 +294,7 @@ class OSMTerrainFetcher:
             self._save_cache(cache_key, gdf)
         return gdf
 
-    def fetch_buildings(
-        self, bbox: Tuple[float, float, float, float]
-    ) -> gpd.GeoDataFrame:
+    def fetch_buildings(self, bbox: Tuple[float, float, float, float]) -> gpd.GeoDataFrame:
         """
         Fetch building footprints for urban operations.
 
@@ -322,9 +323,8 @@ class OSMTerrainFetcher:
         if not gdf.empty:
             # Estimate building height for LOS calculations
             if "building:levels" in gdf.columns:
-                gdf["height_m"] = (
-                    gdf["building:levels"]
-                    .apply(lambda x: float(x) * 3.0 if x else 6.0)
+                gdf["height_m"] = gdf["building:levels"].apply(
+                    lambda x: float(x) * 3.0 if x else 6.0
                 )
             else:
                 gdf["height_m"] = 6.0  # Default 2-story building
@@ -332,9 +332,7 @@ class OSMTerrainFetcher:
             self._save_cache(cache_key, gdf)
         return gdf
 
-    def build_tactical_map(
-        self, bbox: Tuple[float, float, float, float]
-    ) -> Dict[str, Any]:
+    def build_tactical_map(self, bbox: Tuple[float, float, float, float]) -> Dict[str, Any]:
         """
         Build a combined tactical map from all OSM data sources.
 
@@ -383,10 +381,6 @@ class OSMTerrainFetcher:
             log.info(f"Saved combined tactical map: {cache_file}")
 
         return tactical_map
-
-
-# Need pandas for concat in build_tactical_map
-import pandas as pd
 
 
 if __name__ == "__main__":

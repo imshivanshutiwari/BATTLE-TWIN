@@ -1,10 +1,11 @@
 """OLSR protocol simulation for MANET tactical comms."""
-import time
+
 from dataclasses import dataclass, field
 from typing import Dict, List, Set, Tuple
 import numpy as np
 import networkx as nx
 from utils.logger import get_logger
+
 log = get_logger("OLSR_SIM")
 
 
@@ -51,8 +52,8 @@ class OLSRSimulator:
         R = 6371000
         p1, p2 = np.radians(lat1), np.radians(lat2)
         dp, dl = np.radians(lat2 - lat1), np.radians(lon2 - lon1)
-        a = np.sin(dp/2)**2 + np.cos(p1)*np.cos(p2)*np.sin(dl/2)**2
-        return R * 2 * np.arctan2(np.sqrt(a), np.sqrt(1-a))
+        a = np.sin(dp / 2) ** 2 + np.cos(p1) * np.cos(p2) * np.sin(dl / 2) ** 2
+        return R * 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
 
     def send_hello(self):
         """HELLO message exchange — discover 1-hop neighbors."""
@@ -70,8 +71,9 @@ class OLSRSimulator:
                 dist = self._haversine(n1.lat, n1.lon, n2.lat, n2.lon)
                 if dist <= min(n1.radio_range_m, n2.radio_range_m):
                     n1.neighbors.add(nid2)
-                    self.topology.add_edge(nid1, nid2, distance=dist,
-                                           quality=max(0.1, 1.0 - dist/n1.radio_range_m))
+                    self.topology.add_edge(
+                        nid1, nid2, distance=dist, quality=max(0.1, 1.0 - dist / n1.radio_range_m)
+                    )
             n1.hello_messages_sent += 1
 
     def compute_mpr_sets(self):
@@ -91,9 +93,13 @@ class OLSRSimulator:
                 candidates = node.neighbors - mpr
                 if not candidates:
                     break
-                best = max(candidates,
-                           key=lambda n: len(self.nodes[n].neighbors & (two_hop - covered))
-                           if n in self.nodes else 0, default=None)
+                best = max(
+                    candidates,
+                    key=lambda n: (
+                        len(self.nodes[n].neighbors & (two_hop - covered)) if n in self.nodes else 0
+                    ),
+                    default=None,
+                )
                 if best is None:
                     break
                 mpr.add(best)
@@ -121,7 +127,7 @@ class OLSRSimulator:
             node.routing_table.clear()
             try:
                 paths = nx.single_source_dijkstra_path(self.topology, nid, weight="distance")
-                lengths = nx.single_source_dijkstra_path_length(self.topology, nid, weight="distance")
+                _ = nx.single_source_dijkstra_path_length(self.topology, nid, weight="distance")
                 for dest, path in paths.items():
                     if dest != nid and len(path) >= 2:
                         node.routing_table[dest] = (path[1], len(path) - 1)
@@ -145,7 +151,8 @@ class OLSRSimulator:
     def get_network_state(self) -> Dict:
         up = [n for n in self.nodes.values() if n.status == "UP"]
         return {
-            "total_nodes": len(self.nodes), "up_nodes": len(up),
+            "total_nodes": len(self.nodes),
+            "up_nodes": len(up),
             "edges": self.topology.number_of_edges(),
             "connected": nx.is_connected(self.topology) if len(up) > 1 else False,
             "avg_neighbors": np.mean([len(n.neighbors) for n in up]) if up else 0,
@@ -155,7 +162,9 @@ class OLSRSimulator:
 
 if __name__ == "__main__":
     sim = OLSRSimulator()
-    for i, (lat, lon) in enumerate([(34.05,-117.45),(34.07,-117.42),(34.10,-117.38),(34.12,-117.35),(34.15,-117.30)]):
+    for i, (lat, lon) in enumerate(
+        [(34.05, -117.45), (34.07, -117.42), (34.10, -117.38), (34.12, -117.35), (34.15, -117.30)]
+    ):
         sim.add_node(f"N{i}", lat, lon, 8000)
     sim.compute_routing_tables()
     route = sim.route_message("N0", "N4")
